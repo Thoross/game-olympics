@@ -1,8 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit'
 import type { Actions, ServerLoad } from '@sveltejs/kit'
+import { requireAdmin } from '$lib/server/authorization'
 import { rankPlayers } from './utils.server.js'
 
 export const load: ServerLoad = async ({ locals }) => {
+  requireAdmin(locals.user)
   const [gamesResult, seasonsResult, playersResult] = await Promise.all([
     locals.supabase.from('games').select('game_id, game_name').order('game_name'),
     locals.supabase
@@ -22,6 +24,7 @@ export const load: ServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
   default: async ({ request, locals }) => {
+    requireAdmin(locals.user)
     const formData = await request.formData()
 
     const season_id = formData.get('season_id') as string

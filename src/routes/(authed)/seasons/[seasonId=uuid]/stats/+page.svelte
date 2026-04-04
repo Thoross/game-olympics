@@ -66,35 +66,6 @@
 </script>
 
 <div class="flex flex-col gap-10">
-  <!-- Game stats table -->
-  <Card.Root class="gap-0 overflow-hidden">
-    <Card.Header>
-      <Card.Title>Game Stats</Card.Title>
-    </Card.Header>
-    <Card.Content>
-      <Table.Root>
-        <Table.Header>
-          <Table.Row>
-            <Table.Head>Game</Table.Head>
-            <Table.Head class="text-right">Times Played</Table.Head>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {#each data.gameStats as stat}
-            <Table.Row>
-              <Table.Cell>{stat.game_name}</Table.Cell>
-              <Table.Cell class="text-right">{stat.times_played}</Table.Cell>
-            </Table.Row>
-          {:else}
-            <Table.Row>
-              <Table.Cell colspan={2} class="h-24 text-center">No stats yet.</Table.Cell>
-            </Table.Row>
-          {/each}
-        </Table.Body>
-      </Table.Root>
-    </Card.Content>
-  </Card.Root>
-
   <!-- Session scores breakdown -->
   <Card.Root>
     <Card.Header>
@@ -173,6 +144,35 @@
       </Card.Content>
     </Card.Root>
   {/if}
+
+<!-- Game stats table -->
+  <Card.Root class="gap-0 overflow-hidden">
+    <Card.Header>
+      <Card.Title>Game Stats</Card.Title>
+    </Card.Header>
+    <Card.Content>
+      <Table.Root>
+        <Table.Header>
+          <Table.Row>
+            <Table.Head>Game</Table.Head>
+            <Table.Head class="text-right">Times Played</Table.Head>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {#each data.gameStats as stat}
+            <Table.Row>
+              <Table.Cell>{stat.game_name}</Table.Cell>
+              <Table.Cell class="text-right">{stat.times_played}</Table.Cell>
+            </Table.Row>
+          {:else}
+            <Table.Row>
+              <Table.Cell colspan={2} class="h-24 text-center">No stats yet.</Table.Cell>
+            </Table.Row>
+          {/each}
+        </Table.Body>
+      </Table.Root>
+    </Card.Content>
+  </Card.Root>
 
   <!-- Score per game -->
   {#if data.scoresByGame.length > 0}

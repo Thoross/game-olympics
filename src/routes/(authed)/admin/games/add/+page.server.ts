@@ -2,10 +2,12 @@ import { fail, redirect } from '@sveltejs/kit'
 import { z } from 'zod'
 import { addGameSchema } from '$lib/schemas/game/add'
 import { getZodErrors } from '$lib/utils/getZodErrors'
+import { requireAdmin } from '$lib/server/authorization'
 import type { Actions } from './$types'
 
 export const actions: Actions = {
   default: async ({ request, locals }) => {
+    requireAdmin(locals.user)
     const formData = await request.formData()
     const gameName = formData.get('gameName')
     const gameBggUrl = formData.get('gameBggUrl')

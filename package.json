@@ -20,7 +20,7 @@
 		"format": "prettier --write .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run",
-		"generate:types": "npx supabase gen types typescript --project-id \"ouzhwuxmfjrfktlwnwjo\" --schema public > database.types.ts"
+		"generate:types": "npx supabase gen types typescript --project-id \"ouzhwuxmfjrfktlwnwjo\" --schema public > src/lib/database.types.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.2",

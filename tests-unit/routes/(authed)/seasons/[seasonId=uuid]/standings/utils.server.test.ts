@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { positionToPoints, buildStandings, type RawSession } from '$routes/(authed)/seasons/[seasonId=uuid]/standings/utils.server'
+import { positionToPoints } from '$lib/server/utils.server'
+import { buildStandings, type RawSession } from '$routes/(authed)/seasons/[seasonId=uuid]/standings/utils.server'
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -7,11 +8,20 @@ const alice = { player_id: 'p-alice', player_name: 'Alice' }
 const bob = { player_id: 'p-bob', player_name: 'Bob' }
 const carol = { player_id: 'p-carol', player_name: 'Carol' }
 
+let _sessionCounter = 0
+
 function makeSession(
   id: string,
   playerSessions: RawSession['player_sessions'],
+  gameId?: string,
 ): RawSession {
-  return { session_id: id, player_sessions: playerSessions }
+  _sessionCounter++
+  return {
+    session_id: id,
+    game_id: gameId ?? 'g-default',
+    session_date_played: `2024-01-${String(_sessionCounter).padStart(2, '0')}`,
+    player_sessions: playerSessions,
+  }
 }
 
 function ps(
@@ -41,16 +51,16 @@ describe('positionToPoints', () => {
 
 describe('buildStandings', () => {
   it('returns empty array for no sessions', () => {
-    expect(buildStandings([])).toEqual([])
+    expect(buildStandings([], null)).toEqual([])
   })
 
   it('returns empty array when sessions have no player_sessions', () => {
-    expect(buildStandings([makeSession('s-1', null)])).toEqual([])
+    expect(buildStandings([makeSession('s-1', null)], null)).toEqual([])
   })
 
   it('counts a single game played by one player', () => {
     const sessions = [makeSession('s-1', [ps(alice, 10, 1)])]
-    const [standing] = buildStandings(sessions)
+    const [standing] = buildStandings(sessions, null)
     expect(standing.player_id).toBe(alice.player_id)
     expect(standing.games_played).toBe(1)
     expect(standing.standings_points).toBe(4)
@@ -63,7 +73,7 @@ describe('buildStandings', () => {
       makeSession('s-1', [ps(alice, 10, 1)]),
       makeSession('s-2', [ps(alice, 6, 3)]),
     ]
-    const [standing] = buildStandings(sessions)
+    const [standing] = buildStandings(sessions, null)
     expect(standing.games_played).toBe(2)
     expect(standing.standings_points).toBe(6) // 4 + 2
     expect(standing.avg_score).toBe(8) // (10 + 6) / 2
@@ -75,7 +85,7 @@ describe('buildStandings', () => {
       makeSession('s-1', [ps(alice, 10, 1), ps(bob, 8, 2)]),
       makeSession('s-2', [ps(carol, 9, 1)]),
     ]
-    const result = buildStandings(sessions)
+    const result = buildStandings(sessions, null)
     expect(result).toHaveLength(3)
     expect(result.map((s) => s.player_id)).toEqual(
       expect.arrayContaining([alice.player_id, bob.player_id, carol.player_id]),
@@ -86,10 +96,10 @@ describe('buildStandings', () => {
     const sessions = [
       makeSession('s-1', [
         ps(alice, 10, 1), // 4 pts
-        ps(bob, 8, 2),    // 3 pts
+        ps(bob, 8, 2), // 3 pts
       ]),
     ]
-    const result = buildStandings(sessions)
+    const result = buildStandings(sessions, null)
     expect(result[0].player_id).toBe(alice.player_id)
     expect(result[1].player_id).toBe(bob.player_id)
   })
@@ -100,7 +110,7 @@ describe('buildStandings', () => {
       makeSession('s-1', [ps(alice, 20, 1), ps(bob, 5, 2)]),
       makeSession('s-2', [ps(bob, 15, 1), ps(alice, 5, 2)]),
     ]
-    const result = buildStandings(sessions)
+    const result = buildStandings(sessions, null)
     expect(result[0].player_id).toBe(alice.player_id) // avg_score 12.5 vs 10
     expect(result[1].player_id).toBe(bob.player_id)
   })
@@ -109,7 +119,7 @@ describe('buildStandings', () => {
     const sessions = [
       makeSession('s-1', [{ player: [alice], player_session_score: 10, player_session_position: 1 }]),
     ]
-    const [standing] = buildStandings(sessions)
+    const [standing] = buildStandings(sessions, null)
     expect(standing.player_id).toBe(alice.player_id)
   })
 
@@ -117,12 +127,12 @@ describe('buildStandings', () => {
     const sessions = [
       makeSession('s-1', [{ player: null, player_session_score: 10, player_session_position: 1 }]),
     ]
-    expect(buildStandings(sessions)).toEqual([])
+    expect(buildStandings(sessions, null)).toEqual([])
   })
 
   it('does not expose _total_score on returned objects', () => {
     const sessions = [makeSession('s-1', [ps(alice, 10, 1)])]
-    const [standing] = buildStandings(sessions)
+    const [standing] = buildStandings(sessions, null)
     expect('_total_score' in standing).toBe(false)
   })
 })

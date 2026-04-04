@@ -1,6 +1,6 @@
 import type { ServerLoad } from '@sveltejs/kit'
+import { getMultiplier, positionToPoints } from '$lib/server/utils.server.js'
 import {
-  positionToPoints,
   buildGameStats,
   buildPlayers,
   buildSessionBreakdowns,
@@ -8,13 +8,15 @@ import {
   buildScoresByGame,
 } from './utils.server.js'
 
-export const load: ServerLoad = async ({ params, locals }) => {
+export const load: ServerLoad = async ({ params, locals, parent }) => {
+  const { multipliers } = await parent()
+
   const { data, error } = await locals.supabase
     .from('sessions')
     .select(
       `
       session_id,
-      created_at,
+      session_date_played,
       games ( game_id, game_name ),
       player_sessions (
         player_session_score,
@@ -24,16 +26,30 @@ export const load: ServerLoad = async ({ params, locals }) => {
     `,
     )
     .eq('season_id', params.seasonId!)
-    .order('created_at', { ascending: true })
+    .order('session_date_played', { ascending: true })
+    .order('session_id', { ascending: true })
 
   if (error) throw new Error(error.message)
 
-  const sessions = (data ?? []).map((s) => {
+  const rawSessions = data ?? []
+
+  // Per-game play counter for multiplier assignment (D-05)
+  const playCountByGame = new Map<string, number>()
+
+  const sessions = rawSessions.map((s) => {
     const game = Array.isArray(s.games) ? s.games[0] : s.games
+    const gameId = game?.game_id ?? ''
+
+    // Increment play count for this game
+    const playCount = (playCountByGame.get(gameId) ?? 0) + 1
+    playCountByGame.set(gameId, playCount)
+
+    const multiplier = getMultiplier(multipliers, playCount)
+
     return {
       session_id: s.session_id,
-      created_at: s.created_at,
-      game_id: game?.game_id ?? '',
+      session_date_played: s.session_date_played,
+      game_id: gameId,
       game_name: game?.game_name ?? '',
       player_sessions: (s.player_sessions ?? []).map((ps) => {
         const p = Array.isArray(ps.player) ? ps.player[0] : ps.player
@@ -42,7 +58,7 @@ export const load: ServerLoad = async ({ params, locals }) => {
           player_name: p?.player_name ?? '',
           score: ps.player_session_score ?? 0,
           position: ps.player_session_position ?? 0,
-          standings_points: positionToPoints(ps.player_session_position ?? 0),
+          standings_points: positionToPoints(ps.player_session_position ?? 0) * multiplier,
         }
       }),
     }

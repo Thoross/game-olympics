@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { positionToPoints } from '$lib/server/utils.server'
 import {
-  positionToPoints,
   buildGameStats,
   buildPlayers,
   buildSessionBreakdowns,
@@ -20,7 +20,7 @@ function makeSession(
 ): NormalizedSession {
   return {
     session_id: 's-1',
-    created_at: '2024-03-01T00:00:00Z',
+    session_date_played: '2024-03-01T00:00:00Z',
     game_id: 'g-catan',
     game_name: 'Catan',
     ...overrides,
@@ -185,7 +185,7 @@ describe('buildSessionBreakdowns', () => {
   })
 
   it('formats the date in en-US locale', () => {
-    const sessions = [makeSession({ created_at: '2024-03-15T12:00:00Z', player_sessions: [] })]
+    const sessions = [makeSession({ session_date_played: '2024-03-15T12:00:00Z', player_sessions: [] })]
     const [breakdown] = buildSessionBreakdowns(sessions)
     expect(breakdown.date).toBe('Mar 15, 2024')
   })

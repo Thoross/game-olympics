@@ -25,6 +25,11 @@
   let selectedPlayerName = $derived(
     data.availablePlayers.find((p) => p.player_id === selectedPlayerId)?.player_name,
   )
+
+  function formatSchedule(multipliers: number[] | null): string {
+    if (!multipliers || multipliers.length === 0) return 'No schedule'
+    return multipliers.map((m) => `${m}×`).join(' → ')
+  }
 </script>
 
 <svelte:head>
@@ -93,6 +98,22 @@
       </Button>
     </div>
   </form>
+</section>
+
+<hr class="my-8" />
+
+<!-- Scoring Schedule -->
+<section class="max-w-lg">
+  <h2 class="mb-2 text-lg font-semibold">Scoring Schedule</h2>
+  <p class="text-muted-foreground mb-3 text-sm">
+    {formatSchedule(data.schedule?.multipliers ?? null)}
+  </p>
+  <a
+    href="/admin/scoring?season={data.season.season_id}"
+    class="text-sm underline underline-offset-4 hover:opacity-80"
+  >
+    Manage scoring schedule →
+  </a>
 </section>
 
 <hr class="my-8" />

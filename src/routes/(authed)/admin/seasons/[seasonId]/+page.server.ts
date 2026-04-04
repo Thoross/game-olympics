@@ -1,10 +1,12 @@
 import { fail, error } from '@sveltejs/kit'
 import type { Actions, ServerLoad } from '@sveltejs/kit'
+import { requireAdmin } from '$lib/server/authorization'
 
 export const load: ServerLoad = async ({ params, locals }) => {
+  requireAdmin(locals.user)
   const seasonId = params.seasonId!
 
-  const [seasonResult, seasonPlayersResult, allPlayersResult] = await Promise.all([
+  const [seasonResult, seasonPlayersResult, allPlayersResult, scheduleResult] = await Promise.all([
     locals.supabase
       .from('seasons')
       .select('season_id, season_name, season_description, season_status')
@@ -15,6 +17,11 @@ export const load: ServerLoad = async ({ params, locals }) => {
       .select('season_players_id, player ( player_id, player_name )')
       .eq('season_id', seasonId),
     locals.supabase.from('player').select('player_id, player_name').order('player_name'),
+    locals.supabase
+      .from('season_scoring_schedules')
+      .select('multipliers')
+      .eq('season_id', seasonId)
+      .maybeSingle(),
   ])
 
   if (seasonResult.error || !seasonResult.data) {
@@ -37,11 +44,13 @@ export const load: ServerLoad = async ({ params, locals }) => {
     availablePlayers: (allPlayersResult.data ?? []).filter(
       (p) => !seasonPlayerIds.has(p.player_id),
     ),
+    schedule: scheduleResult.data ?? null,
   }
 }
 
 export const actions: Actions = {
   updateDetails: async ({ params, request, locals }) => {
+    requireAdmin(locals.user)
     const seasonId = params.seasonId!
     const formData = await request.formData()
 
@@ -70,6 +79,7 @@ export const actions: Actions = {
   },
 
   addPlayer: async ({ params, request, locals }) => {
+    requireAdmin(locals.user)
     const seasonId = params.seasonId!
     const formData = await request.formData()
     const player_id = formData.get('player_id') as string
@@ -90,6 +100,7 @@ export const actions: Actions = {
   },
 
   removePlayer: async ({ request, locals }) => {
+    requireAdmin(locals.user)
     const formData = await request.formData()
     const season_players_id = formData.get('season_players_id') as string
 

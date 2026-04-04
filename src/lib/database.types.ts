@@ -140,6 +140,38 @@ export type Database = {
           },
         ]
       }
+      season_scoring_schedules: {
+        Row: {
+          created_at: string
+          multipliers: number[]
+          schedule_id: string
+          season_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          multipliers: number[]
+          schedule_id?: string
+          season_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          multipliers?: number[]
+          schedule_id?: string
+          season_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "season_scoring_schedules_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: true
+            referencedRelation: "seasons"
+            referencedColumns: ["season_id"]
+          },
+        ]
+      }
       seasons: {
         Row: {
           created_at: string

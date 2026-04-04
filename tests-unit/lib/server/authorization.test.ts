@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { requireAdmin, isAdmin } from './authorization'
+import { requireAdmin, isAdmin } from '$lib/server/authorization'
 
 describe('requireAdmin', () => {
 	it('throws for PLAYER role', () => {

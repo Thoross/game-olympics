@@ -8,18 +8,13 @@ export type NormalizedPlayerSession = {
 
 export type NormalizedSession = {
   session_id: string
-  created_at: string
+  session_date_played: string
   game_id: string
   game_name: string
   player_sessions: NormalizedPlayerSession[]
 }
 
 export type Player = { player_id: string; player_name: string }
-
-export function positionToPoints(position: number): number {
-  const points: Record<number, number> = { 1: 4, 2: 3, 3: 2, 4: 1 }
-  return points[position] ?? 0
-}
 
 export function buildGameStats(sessions: NormalizedSession[]) {
   const gameMap = new Map<string, { game_id: string; game_name: string; times_played: number }>()
@@ -48,7 +43,7 @@ export function buildPlayers(sessions: NormalizedSession[]): Player[] {
 export function buildSessionBreakdowns(sessions: NormalizedSession[]) {
   return sessions.map((s) => ({
     session_id: s.session_id,
-    date: new Date(s.created_at).toLocaleDateString('en-US', {
+    date: new Date(s.session_date_played).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

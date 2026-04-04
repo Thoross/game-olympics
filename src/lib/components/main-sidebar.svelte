@@ -38,6 +38,10 @@
       url: '/admin/seasons',
     },
     {
+      title: 'Scoring Schedules',
+      url: '/admin/scoring',
+    },
+    {
       title: 'Add Game',
       url: '/admin/games/add',
     },

@@ -79,7 +79,6 @@ Standings sort: `standings_points` desc → `avg_score` desc (tiebreaker).
 - Unit tests use `.test.ts` (node); extract pure functions from SvelteKit server files into a co-located `utils.server.ts` to keep them testable without mocking the framework
 - Line charts use `LineChart` from `layerchart`, wrapped in `ChartContainer` from `$lib/components/ui/chart`
 
-<!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
 **Game Olympics — Configurable Season Scoring**
@@ -94,9 +93,7 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - **DB schema**: Requires Supabase migration; types regenerated via `npm run generate:types`
 - **Backwards compat**: Existing seasons without a schedule must continue to work with the fixed 4/3/2/1 system
 - **Auth**: Schedule management is admin-only; follow existing `requireAdmin()` pattern
-<!-- GSD:project-end -->
 
-<!-- GSD:stack-start source:codebase/STACK.md -->
 ## Technology Stack
 
 ## Languages
@@ -170,9 +167,7 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - Supabase project access (project ID: `ouzhwuxmfjrfktlwnwjo`)
 - Determined by `adapter-auto` (supports Vercel, Netlify, Cloudflare Pages, etc.)
 - Requires `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY` environment variables
-<!-- GSD:stack-end -->
 
-<!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
 ## Code Style & Formatting
@@ -207,9 +202,7 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - Tailwind CSS v4 with `@tailwindcss/vite` plugin
 - Global styles in `src/routes/layout.css`
 - Tailwind class ordering managed by prettier-plugin-tailwindcss
-<!-- GSD:conventions-end -->
 
-<!-- GSD:architecture-start source:ARCHITECTURE.md -->
 ## Architecture
 
 ## Overview
@@ -243,24 +236,3 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - `Database` (`src/lib/database.types.ts`): Generated Supabase types for all tables
 - Zod schemas in `src/lib/schemas/` for form validation (signin, registration, game add, etc.)
 ## Scoring System
-<!-- GSD:architecture-end -->
-
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd:debug` for investigation and bug fixing
-- `/gsd:execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
-
-<!-- GSD:profile-start -->
-## Developer Profile
-
-> Profile not yet configured. Run `/gsd:profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
-<!-- GSD:profile-end -->

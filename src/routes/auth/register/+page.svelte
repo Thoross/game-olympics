@@ -1,10 +1,10 @@
 <script lang="ts">
   import { enhance, applyAction } from '$app/forms'
   import { goto } from '$app/navigation'
-  import { Button } from '$lib/components/ui/Button'
-  import { Input } from '$lib/components/ui/Input'
+  import { Button } from '$lib/components/ui/button'
+  import { Input } from '$lib/components/ui/input'
   import Label from '$lib/components/ui/label/label.svelte'
-  import { Spinner } from '$lib/components/ui/Spinner'
+  import { Spinner } from '$lib/components/ui/spinner'
 
   let { form } = $props()
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/Button'
-  import { Label } from '$lib/components/ui/Label'
-  import { Input } from '$lib/components/ui/Input'
-  import { Spinner } from '$lib/components/ui/Spinner'
+  import { Button } from '$lib/components/ui/button'
+  import { Label } from '$lib/components/ui/label'
+  import { Input } from '$lib/components/ui/input'
+  import { Spinner } from '$lib/components/ui/spinner'
   import Alert from '$lib/components/Alert.svelte'
   import { applyAction, enhance } from '$app/forms'
 

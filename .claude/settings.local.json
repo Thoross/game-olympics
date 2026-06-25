@@ -6,10 +6,6 @@
       "Bash(find /Users/brendanbetts/Documents/projects/game-olympics/node_modules/layerchart -name *.svelte)",
       "Bash(grep -A 30 series? /Users/brendanbetts/Documents/projects/game-olympics/node_modules/layerchart/dist/components/charts/types.d.ts)",
       "Bash(grep -A 20 series?: /Users/brendanbetts/Documents/projects/game-olympics/node_modules/layerchart/dist/components/charts/types.d.ts)",
-      "Bash(mkdir -p .planning/research)",
-      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs agent-skills gsd-project-researcher)",
-      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs agent-skills gsd-synthesizer)",
-      "Skill(gsd:plan-phase)",
       "Bash(node:*)"
     ]
   }

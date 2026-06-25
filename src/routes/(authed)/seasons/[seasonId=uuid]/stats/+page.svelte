@@ -137,7 +137,6 @@
             }}
             series={playerSeries}
             legend
-            tooltip
             points
           />
         </ChartContainer>
@@ -199,7 +198,6 @@
                   }}
                   series={gameSeriesFor(game.playerIds)}
                   legend
-                  tooltip
                   points
                 />
               </ChartContainer>

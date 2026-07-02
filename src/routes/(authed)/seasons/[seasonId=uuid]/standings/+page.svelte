@@ -28,8 +28,8 @@
           <Table.Cell>{standing.player_name}</Table.Cell>
           <Table.Cell class="text-right">{standing.games_played}</Table.Cell>
           <Table.Cell class="text-right">{standing.standings_points}</Table.Cell>
-          <Table.Cell class="text-right">{standing.avg_score.toFixed(1)}</Table.Cell>
-          <Table.Cell class="text-right">{standing.avg_position.toFixed(1)}</Table.Cell>
+          <Table.Cell class="text-right">{standing.avg_score.toFixed(2)}</Table.Cell>
+          <Table.Cell class="text-right">{standing.avg_position.toFixed(2)}</Table.Cell>
         </Table.Row>
       {:else}
         <Table.Row>

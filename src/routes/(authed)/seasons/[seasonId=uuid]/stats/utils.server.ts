@@ -63,7 +63,7 @@ export function buildStandingsOverTime(sessions: NormalizedSession[], players: P
           (cumulativePoints.get(ps.player_id) ?? 0) + ps.standings_points,
         )
     }
-    const snapshot: Record<string, number | string> = { label: `Game ${i + 1}` }
+    const snapshot: Record<string, number | string> = { label: `Session #${i + 1}` }
     for (const [pid, pts] of cumulativePoints) snapshot[pid] = pts
     return snapshot
   })
@@ -105,7 +105,7 @@ export function buildScoresByGame(sessions: NormalizedSession[]) {
     game_name: g.game_name,
     playerIds: Array.from(g.playerIds),
     sessions: g.plays.map((play, i) => ({
-      label: `Play ${i + 1}`,
+      label: `Session #${i + 1}`,
       ...play.scores,
     })) as Record<string, number | string>[],
   }))

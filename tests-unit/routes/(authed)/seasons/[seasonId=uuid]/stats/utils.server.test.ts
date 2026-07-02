@@ -240,7 +240,7 @@ describe('buildStandingsOverTime', () => {
     expect(snap2[bob.player_id]).toBe(7)
   })
 
-  it('labels snapshots as "Game N"', () => {
+  it('labels snapshots as "Session #N"', () => {
     const players = [alice]
     const sessions = [
       makeSession({
@@ -253,8 +253,8 @@ describe('buildStandingsOverTime', () => {
       }),
     ]
     const snapshots = buildStandingsOverTime(sessions, players)
-    expect(snapshots[0].label).toBe('Game 1')
-    expect(snapshots[1].label).toBe('Game 2')
+    expect(snapshots[0].label).toBe('Session #1')
+    expect(snapshots[1].label).toBe('Session #2')
   })
 
   it('initialises all players to 0 before their first session', () => {
@@ -307,8 +307,8 @@ describe('buildScoresByGame', () => {
       }),
     ]
     const [game] = buildScoresByGame(sessions)
-    expect(game.sessions[0].label).toBe('Play 1')
-    expect(game.sessions[1].label).toBe('Play 2')
+    expect(game.sessions[0].label).toBe('Session #1')
+    expect(game.sessions[1].label).toBe('Session #2')
   })
 
   it('records per-player scores in each play', () => {

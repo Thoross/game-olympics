@@ -11,20 +11,17 @@
     COMPLETED: 'Completed',
   }
 
-  const getVariant = (status: Database['public']['Enums']['Season Status']) => {
-    switch (status) {
-      case 'UPCOMING':
-        return 'secondary'
-      case 'IN_PROGRESS':
-        return 'secondary'
-      case 'SUSPENDED':
-        return 'destructive'
-      case 'COMPLETED':
-        return 'default'
-      default:
-        return 'default'
-    }
+  const statusClasses: Record<Database['public']['Enums']['Season Status'], string> = {
+    UPCOMING:
+      'border-blue-500/20 bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
+    IN_PROGRESS:
+      'border-green-500/20 bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400',
+    SUSPENDED:
+      'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
+    COMPLETED: 'border-border bg-muted text-muted-foreground dark:bg-muted/50',
   }
 </script>
 
-<Badge variant={getVariant(seasonStatus)}>{statusLabels[seasonStatus] ?? 'Unknown'}</Badge>
+<Badge variant="outline" class={statusClasses[seasonStatus]}>
+  {statusLabels[seasonStatus] ?? 'Unknown'}
+</Badge>

@@ -25,8 +25,8 @@
       <Table.Header>
         <Table.Row>
           <Table.Head>Name</Table.Head>
-          <Table.Head>Status</Table.Head>
           <Table.Head>Description</Table.Head>
+          <Table.Head>Status</Table.Head>
         </Table.Row>
       </Table.Header>
       <Table.Body>

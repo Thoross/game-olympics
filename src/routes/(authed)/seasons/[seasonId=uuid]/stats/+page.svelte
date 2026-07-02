@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { LineChart } from 'layerchart'
+  import { LineChart, Tooltip } from 'layerchart'
+  import { format } from '@layerstack/utils'
   import * as Table from '$lib/components/ui/table'
   import * as Tabs from '$lib/components/ui/tabs'
   import * as Card from '$lib/components/ui/card'
@@ -138,13 +139,33 @@
             series={playerSeries}
             legend
             points
-          />
+          >
+            {#snippet tooltip({ context })}
+              {@const rows = context.tooltip.series
+                .filter((s) => s.visible)
+                .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))}
+              <Tooltip.Root {context}>
+                <Tooltip.Header value={context.x(context.tooltip.data)} {format} />
+                <Tooltip.List>
+                  {#each rows as s (s.key)}
+                    <Tooltip.Item
+                      label={s.label}
+                      value={s.value}
+                      color={s.color}
+                      {format}
+                      valueAlign="right"
+                    />
+                  {/each}
+                </Tooltip.List>
+              </Tooltip.Root>
+            {/snippet}
+          </LineChart>
         </ChartContainer>
       </Card.Content>
     </Card.Root>
   {/if}
 
-<!-- Game stats table -->
+  <!-- Game stats table -->
   <Card.Root class="gap-0 overflow-hidden">
     <Card.Header>
       <Card.Title>Game Stats</Card.Title>
@@ -199,7 +220,27 @@
                   series={gameSeriesFor(game.playerIds)}
                   legend
                   points
-                />
+                >
+                  {#snippet tooltip({ context })}
+                    {@const rows = context.tooltip.series
+                      .filter((s) => s.visible)
+                      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))}
+                    <Tooltip.Root {context}>
+                      <Tooltip.Header value={context.x(context.tooltip.data)} {format} />
+                      <Tooltip.List>
+                        {#each rows as s (s.key)}
+                          <Tooltip.Item
+                            label={s.label}
+                            value={s.value}
+                            color={s.color}
+                            {format}
+                            valueAlign="right"
+                          />
+                        {/each}
+                      </Tooltip.List>
+                    </Tooltip.Root>
+                  {/snippet}
+                </LineChart>
               </ChartContainer>
             </Tabs.Content>
           {/each}

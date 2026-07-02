@@ -5,20 +5,39 @@ import { rankPlayers } from './utils.server.js'
 
 export const load: ServerLoad = async ({ locals }) => {
   requireAdmin(locals.user)
-  const [gamesResult, seasonsResult, playersResult] = await Promise.all([
+  const [gamesResult, seasonsResult] = await Promise.all([
     locals.supabase.from('games').select('game_id, game_name').order('game_name'),
     locals.supabase
       .from('seasons')
       .select('season_id, season_name')
       .in('season_status', ['UPCOMING', 'IN_PROGRESS'])
       .order('season_name'),
-    locals.supabase.from('player').select('player_id, player_name').order('player_name'),
   ])
+
+  const seasons = seasonsResult.data ?? []
+
+  const seasonPlayersResult = await locals.supabase
+    .from('season_players')
+    .select('season_id, player ( player_id, player_name )')
+    .in(
+      'season_id',
+      seasons.map((s) => s.season_id),
+    )
+
+  const playersBySeason: Record<string, { player_id: string; player_name: string }[]> = {}
+  for (const row of seasonPlayersResult.data ?? []) {
+    const p = Array.isArray(row.player) ? row.player[0] : row.player
+    if (!p) continue
+    ;(playersBySeason[row.season_id] ??= []).push({
+      player_id: p.player_id,
+      player_name: p.player_name,
+    })
+  }
 
   return {
     games: gamesResult.data ?? [],
-    seasons: seasonsResult.data ?? [],
-    players: playersResult.data ?? [],
+    seasons,
+    playersBySeason,
   }
 }
 
@@ -55,6 +74,17 @@ export const actions: Actions = {
     const uniqueIds = new Set(playerEntries.map((e) => e.player_id))
     if (uniqueIds.size !== playerEntries.length) {
       return fail(400, { message: 'Each player can only appear once per session.' })
+    }
+
+    const { data: rosterData } = await locals.supabase
+      .from('season_players')
+      .select('player_id')
+      .eq('season_id', season_id)
+    const rosterIds = new Set((rosterData ?? []).map((r) => r.player_id))
+    for (const entry of playerEntries) {
+      if (!rosterIds.has(entry.player_id)) {
+        return fail(400, { message: 'Player not in this season.' })
+      }
     }
 
     const { data: sessionData, error: sessionError } = await locals.supabase

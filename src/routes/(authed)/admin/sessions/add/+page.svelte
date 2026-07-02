@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
+  import { page } from '$app/state'
   import * as Select from '$lib/components/ui/select'
   import Input from '$lib/components/ui/input/input.svelte'
   import Label from '$lib/components/ui/label/label.svelte'
@@ -9,25 +10,45 @@
 
   type PlayerEntry = { player_id: string; score: string }
 
-  let seasonId = $state('')
+  function todayLocal() {
+    const d = new Date()
+    const off = d.getTimezoneOffset()
+    return new Date(d.getTime() - off * 60_000).toISOString().split('T')[0]
+  }
+
+  let seasonId = $state(page.url.searchParams.get('season') ?? '')
   let gameId = $state('')
-  let datePlayed = $state('')
-  let playerEntries = $state<PlayerEntry[]>([{ player_id: '', score: '' }])
+  let datePlayed = $state(todayLocal())
+  let playerEntries = $state<PlayerEntry[]>([])
   let loading = $state(false)
 
   let selectedSeason = $derived(data.seasons.find((s) => s.season_id === seasonId))
   let selectedGame = $derived(data.games.find((g) => g.game_id === gameId))
 
-  function addPlayer() {
-    playerEntries = [...playerEntries, { player_id: '', score: '' }]
+  let seasonRoster = $derived(data.playersBySeason[seasonId] ?? [])
+  let availableChips = $derived(
+    seasonRoster.filter((p) => !playerEntries.some((e) => e.player_id === p.player_id)),
+  )
+  let deepLinkNotSelectable = $derived(
+    seasonId !== '' && !data.seasons.some((s) => s.season_id === seasonId),
+  )
+
+  function changeSeason(v: string) {
+    seasonId = v
+    playerEntries = []
+  }
+
+  function addPlayer(p: { player_id: string; player_name: string }) {
+    if (playerEntries.some((e) => e.player_id === p.player_id)) return
+    playerEntries = [...playerEntries, { player_id: p.player_id, score: '' }]
   }
 
   function removePlayer(index: number) {
     playerEntries = playerEntries.filter((_, i) => i !== index)
   }
 
-  function getSelectedPlayerName(playerId: string) {
-    return data.players.find((p) => p.player_id === playerId)?.player_name
+  function playerName(playerId: string) {
+    return seasonRoster.find((p) => p.player_id === playerId)?.player_name ?? playerId
   }
 </script>
 
@@ -59,7 +80,7 @@
   <!-- Season -->
   <div class="flex flex-col gap-1.5">
     <Label>Season</Label>
-    <Select.Root type="single" bind:value={seasonId}>
+    <Select.Root type="single" value={seasonId} onValueChange={changeSeason}>
       <Select.Trigger class="w-full">
         {selectedSeason?.season_name ?? 'Select a season…'}
       </Select.Trigger>
@@ -71,17 +92,17 @@
         {/each}
       </Select.Content>
     </Select.Root>
+    {#if deepLinkNotSelectable}
+      <p class="text-sm text-muted-foreground">
+        This season isn't available for new sessions. Choose an active season above.
+      </p>
+    {/if}
   </div>
 
   <!-- Date Played -->
   <div class="flex flex-col gap-1.5">
     <Label for="datePlayed">Date Played</Label>
-    <Input
-      id="datePlayed"
-      type="date"
-      bind:value={datePlayed}
-      max={new Date().toISOString().split('T')[0]}
-    />
+    <Input id="datePlayed" type="date" bind:value={datePlayed} max={todayLocal()} />
   </div>
 
   <!-- Game -->
@@ -105,26 +126,25 @@
   <div class="flex flex-col gap-3">
     <Label>Players</Label>
 
-    {#each playerEntries as entry, i}
+    {#if seasonId === '' || deepLinkNotSelectable}
+      <p class="text-sm text-muted-foreground">Select a season to choose players.</p>
+    {:else if availableChips.length > 0}
+      <div class="flex flex-wrap gap-2">
+        {#each availableChips as player (player.player_id)}
+          <Button type="button" variant="outline" size="sm" onclick={() => addPlayer(player)}>
+            {player.player_name}
+          </Button>
+        {/each}
+      </div>
+    {:else if seasonRoster.length === 0}
+      <p class="text-sm text-muted-foreground">No players in this season.</p>
+    {:else}
+      <p class="text-sm text-muted-foreground">All players added.</p>
+    {/if}
+
+    {#each playerEntries as entry, i (entry.player_id)}
       <div class="flex items-center gap-2">
-        <div class="flex-1">
-          <Select.Root
-            type="single"
-            value={entry.player_id}
-            onValueChange={(v) => {
-              playerEntries[i] = { ...playerEntries[i], player_id: v }
-            }}
-          >
-            <Select.Trigger class="w-full">
-              {getSelectedPlayerName(entry.player_id) ?? 'Select player…'}
-            </Select.Trigger>
-            <Select.Content>
-              {#each data.players as player (player.player_id)}
-                <Select.Item value={player.player_id}>{player.player_name}</Select.Item>
-              {/each}
-            </Select.Content>
-          </Select.Root>
-        </div>
+        <div class="flex-1">{playerName(entry.player_id)}</div>
 
         <div class="w-28">
           <Input
@@ -142,25 +162,20 @@
           variant="ghost"
           size="sm"
           onclick={() => removePlayer(i)}
-          disabled={playerEntries.length === 1}
-          class="text-muted-foreground hover:text-destructive shrink-0"
+          class="shrink-0 text-muted-foreground hover:text-destructive"
         >
           Remove
         </Button>
       </div>
     {/each}
-
-    <Button type="button" variant="outline" size="sm" onclick={addPlayer} class="w-fit">
-      + Add Player
-    </Button>
   </div>
 
   {#if form?.message}
-    <p class="text-destructive text-sm">{form.message}</p>
+    <p class="text-sm text-destructive">{form.message}</p>
   {/if}
 
   <div class="flex gap-2">
-    <Button type="submit" disabled={loading}>
+    <Button type="submit" disabled={loading || playerEntries.length === 0}>
       {loading ? 'Saving…' : 'Save Session'}
     </Button>
     <Button variant="outline" type="button" onclick={() => history.back()}>Cancel</Button>

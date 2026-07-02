@@ -5,23 +5,11 @@ import z from 'zod'
 
 export const actions = {
   forgot: async ({ request, locals, url }) => {
+    let valid
     try {
       const formData = await request.formData()
       const { email } = Object.fromEntries(formData)
-      const valid = forgotPasswordSchema.parse({ email })
-
-      const { error } = await locals.supabase.auth.resetPasswordForEmail(valid.email, {
-        redirectTo: `${url.origin}/auth/reset-password`,
-      })
-
-      if (error) {
-        return fail(500, {
-          message: 'Something went wrong. Please try again later.',
-        })
-      }
-
-      // Always return success to prevent email enumeration
-      return { success: true }
+      valid = forgotPasswordSchema.parse({ email })
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errors = getZodErrors(error)
@@ -31,5 +19,18 @@ export const actions = {
         message: 'Something went wrong. Please try again later.',
       })
     }
+
+    const { error } = await locals.supabase.auth.resetPasswordForEmail(valid.email, {
+      redirectTo: `${url.origin}/auth/reset-password`,
+    })
+
+    if (error) {
+      return fail(500, {
+        message: 'Something went wrong. Please try again later.',
+      })
+    }
+
+    // Always return success to prevent email enumeration
+    return { success: true, email: valid.email }
   },
 }

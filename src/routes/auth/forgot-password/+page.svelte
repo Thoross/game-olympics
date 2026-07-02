@@ -4,6 +4,7 @@
   import { Input } from '$lib/components/ui/input'
   import { Spinner } from '$lib/components/ui/spinner'
   import Alert from '$lib/components/Alert.svelte'
+  import AuthCard from '$lib/components/AuthCard.svelte'
   import { applyAction, enhance } from '$app/forms'
 
   let { form } = $props()
@@ -15,68 +16,61 @@
   <title>Forgot Password - Game Olympics</title>
 </svelte:head>
 
-<div
-  class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800"
->
-  <div class="w-full max-w-md">
-    <div class="rounded-lg bg-white p-8 shadow-xl">
-      <h1 class="mb-8 text-center text-3xl font-bold text-slate-900">Reset Password</h1>
-
-      {#if form?.success}
-        <Alert
-          type="default"
-          message="If an account exists with that email, you will receive a password reset link shortly."
-        />
-        <p class="mt-6 text-center text-sm text-slate-600">
-          <a href="/auth/signin" class="font-medium text-blue-600 hover:text-blue-700">
-            Back to Sign In
-          </a>
-        </p>
-      {:else}
-        <form
-          class="space-y-4"
-          method="POST"
-          action="?/forgot"
-          use:enhance={() => {
-            loading = true
-            return async ({ result }) => {
-              loading = false
-              applyAction(result)
-            }
-          }}
-        >
-          {#if form?.message}
-            <Alert type="destructive" message={form.message} />
-          {/if}
-          <div>
-            <Label for="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              name="email"
-              required
-              placeholder="you@example.com"
-              disabled={loading}
-            />
-            {#if form?.errors?.email}
-              <p class="mt-1 text-sm text-red-600">{form.errors.email}</p>
-            {/if}
-          </div>
-
-          <Button type="submit" disabled={loading} class="w-full">
-            {#if loading}
-              <Spinner />
-            {/if}
-            Send Reset Link
-          </Button>
-        </form>
-
-        <p class="mt-6 text-center text-sm text-slate-600">
-          <a href="/auth/signin" class="font-medium text-blue-600 hover:text-blue-700">
-            Back to Sign In
-          </a>
-        </p>
+{#if form?.success}
+  <AuthCard title="Reset password">
+    <Alert
+      type="default"
+      message={`If an account exists for ${form.email}, a password reset link has been sent. Check your inbox.`}
+    />
+    {#snippet footer()}
+      <p class="text-center">
+        <a href="/auth/signin" class="font-medium text-primary hover:underline">Back to sign in</a>
+      </p>
+    {/snippet}
+  </AuthCard>
+{:else}
+  <AuthCard title="Reset password" description="Enter your email and we'll send a reset link.">
+    <form
+      class="space-y-4"
+      method="POST"
+      action="?/forgot"
+      use:enhance={() => {
+        loading = true
+        return async ({ result }) => {
+          loading = false
+          applyAction(result)
+        }
+      }}
+    >
+      {#if form?.message}
+        <Alert type="destructive" message={form.message} />
       {/if}
-    </div>
-  </div>
-</div>
+      <div class="flex flex-col gap-2">
+        <Label for="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          name="email"
+          required
+          placeholder="you@example.com"
+          disabled={loading}
+        />
+        {#if form?.errors?.email}
+          <p class="mt-1 text-sm text-destructive">{form.errors.email}</p>
+        {/if}
+      </div>
+
+      <Button type="submit" disabled={loading} class="w-full">
+        {#if loading}
+          <Spinner />
+        {/if}
+        Send Reset Link
+      </Button>
+    </form>
+    {#snippet footer()}
+      <p class="text-center">
+        <a href="/auth/signin" class="font-medium text-primary hover:underline">Back to sign in</a>
+      </p>
+    {/snippet}
+  </AuthCard>
+{/if}

@@ -1,6 +1,6 @@
 import { registerSchema } from '$lib/schemas/user/registration'
 import z from 'zod'
-import { fail, redirect } from '@sveltejs/kit'
+import { fail } from '@sveltejs/kit'
 import { getZodErrors } from '$lib/utils/getZodErrors.js'
 
 export const actions = {
@@ -25,8 +25,25 @@ export const actions = {
       },
     })
     if (signUpError) {
-      return fail(400, { message: JSON.stringify(signUpError) })
+      console.error('signup failed', signUpError)
+      const rawMessage = signUpError.message ?? ''
+      const code = (signUpError as { code?: string }).code ?? ''
+      const status = signUpError.status
+      const alreadyRegistered =
+        /already registered/i.test(rawMessage) ||
+        /already exists/i.test(rawMessage) ||
+        code === 'user_already_exists' ||
+        status === 422
+      if (alreadyRegistered) {
+        return fail(400, {
+          message:
+            'An account with that email already exists. Try signing in or resetting your password.',
+        })
+      }
+      return fail(400, {
+        message: 'We could not create your account. Please try again.',
+      })
     }
-    redirect(303, '/auth/signin?registered=1')
+    return { success: true, email: valid.email }
   },
 }

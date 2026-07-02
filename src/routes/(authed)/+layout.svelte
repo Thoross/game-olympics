@@ -2,7 +2,6 @@
   import favicon from '$lib/assets/favicon.svg'
   import * as Sidebar from '$lib/components/ui/sidebar'
   import MainSidebar from '$lib/components/main-sidebar.svelte'
-  import { ModeWatcher } from 'mode-watcher'
   import Separator from '$lib/components/ui/separator/separator.svelte'
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte'
 
@@ -13,7 +12,6 @@
   <link rel="icon" href={favicon} />
 </svelte:head>
 
-<ModeWatcher />
 <Sidebar.Provider>
   <MainSidebar />
   <Sidebar.Inset>

@@ -5,10 +5,12 @@
   import { Spinner } from '$lib/components/ui/spinner'
   import Alert from '$lib/components/Alert.svelte'
   import { applyAction, enhance } from '$app/forms'
+  import { page } from '$app/state'
 
   let { form } = $props()
 
   let loading = $state(false)
+  let justRegistered = $derived(page.url.searchParams.get('registered') === '1')
 </script>
 
 <svelte:head>
@@ -34,6 +36,12 @@
           }
         }}
       >
+        {#if justRegistered && !form?.message}
+          <Alert
+            type="default"
+            message="Account created. Check your email to confirm your address, then sign in."
+          />
+        {/if}
         {#if form?.message}
           <Alert type="destructive" message={form.message} />
         {/if}

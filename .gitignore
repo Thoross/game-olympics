@@ -43,3 +43,4 @@ logs/
 npm-debug.log*
 
 .planning/*
+supabase/.temp

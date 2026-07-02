@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { enhance, applyAction } from '$app/forms'
+  import { enhance } from '$app/forms'
+  import { resolve } from '$app/paths'
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
   import Label from '$lib/components/ui/label/label.svelte'
@@ -27,7 +28,7 @@
     />
     {#snippet footer()}
       <p class="text-center">
-        <a href="/auth/signin" class="font-medium text-primary hover:underline">Back to sign in</a>
+        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Back to sign in</a>
       </p>
     {/snippet}
   </AuthCard>
@@ -40,11 +41,12 @@
       class="space-y-4"
       method="POST"
       action="?/register"
+      novalidate
       use:enhance={() => {
         loading = true
-        return async ({ result }) => {
+        return async ({ update }) => {
+          await update({ reset: false })
           loading = false
-          applyAction(result)
         }
       }}
     >
@@ -120,7 +122,7 @@
     {#snippet footer()}
       <p class="text-center text-muted-foreground">
         Already have an account?
-        <a href="/auth/signin" class="font-medium text-primary hover:underline">Sign in</a>
+        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Sign in</a>
       </p>
     {/snippet}
   </AuthCard>

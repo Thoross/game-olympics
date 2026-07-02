@@ -13,7 +13,6 @@ export const actions = {
       const { error } = await locals.supabase.auth.updateUser({
         password: valid.password,
       })
-      console.log('🚀 ~ error:', error)
 
       if (error) {
         return fail(500, {

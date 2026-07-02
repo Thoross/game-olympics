@@ -5,7 +5,8 @@
   import { Spinner } from '$lib/components/ui/spinner'
   import Alert from '$lib/components/Alert.svelte'
   import AuthCard from '$lib/components/AuthCard.svelte'
-  import { applyAction, enhance } from '$app/forms'
+  import { enhance } from '$app/forms'
+  import { resolve } from '$app/paths'
 
   let { form } = $props()
 
@@ -24,7 +25,7 @@
     />
     {#snippet footer()}
       <p class="text-center">
-        <a href="/auth/signin" class="font-medium text-primary hover:underline">Back to sign in</a>
+        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Back to sign in</a>
       </p>
     {/snippet}
   </AuthCard>
@@ -34,11 +35,12 @@
       class="space-y-4"
       method="POST"
       action="?/forgot"
+      novalidate
       use:enhance={() => {
         loading = true
-        return async ({ result }) => {
+        return async ({ update }) => {
+          await update({ reset: false })
           loading = false
-          applyAction(result)
         }
       }}
     >
@@ -69,7 +71,7 @@
     </form>
     {#snippet footer()}
       <p class="text-center">
-        <a href="/auth/signin" class="font-medium text-primary hover:underline">Back to sign in</a>
+        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Back to sign in</a>
       </p>
     {/snippet}
   </AuthCard>

@@ -6,7 +6,8 @@
   import Alert from '$lib/components/Alert.svelte'
   import AuthCard from '$lib/components/AuthCard.svelte'
   import PasswordRules from '$lib/components/PasswordRules.svelte'
-  import { applyAction, enhance } from '$app/forms'
+  import { enhance } from '$app/forms'
+  import { resolve } from '$app/paths'
   import { page } from '$app/state'
   import { onMount } from 'svelte'
 
@@ -58,12 +59,12 @@
   {#if form?.success}
     <Alert type="default" message="Your password has been updated." />
     <p class="mt-4 text-center text-sm">
-      <a href="/auth/signin" class="font-medium text-primary hover:underline">Sign in</a>
+      <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Sign in</a>
     </p>
   {:else if sessionError}
     <Alert type="destructive" message="Invalid or expired reset link. Please request a new one." />
     <p class="mt-4 text-center text-sm">
-      <a href="/auth/forgot-password" class="font-medium text-primary hover:underline">
+      <a href={resolve('/auth/forgot-password')} class="font-medium text-primary hover:underline">
         Request new reset link
       </a>
     </p>
@@ -77,11 +78,12 @@
       class="space-y-4"
       method="POST"
       action="?/reset"
+      novalidate
       use:enhance={() => {
         loading = true
-        return async ({ result }) => {
+        return async ({ update }) => {
+          await update({ reset: false })
           loading = false
-          applyAction(result)
         }
       }}
     >

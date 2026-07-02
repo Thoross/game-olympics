@@ -25,9 +25,7 @@ export const actions = {
     })
 
     if (error) {
-      return fail(500, {
-        message: 'Something went wrong. Please try again later.',
-      })
+      console.error('resetPasswordForEmail failed', error)
     }
 
     // Always return success to prevent email enumeration

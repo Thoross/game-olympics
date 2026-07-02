@@ -5,7 +5,8 @@ export const hasAuthSession: Handle = async ({ event, resolve }) => {
     event.route.id === '/auth/signin' ||
     event.route.id === '/auth/register' ||
     event.route.id === '/auth/forgot-password' ||
-    event.route.id === '/auth/reset-password'
+    event.route.id === '/auth/reset-password' ||
+    event.route.id === '/auth/callback'
   const { session: hasSession, user } = await event.locals.safeGetSession()
 
   if (isAuthRoute && !hasSession) {

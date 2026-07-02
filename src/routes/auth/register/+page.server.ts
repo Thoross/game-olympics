@@ -25,7 +25,7 @@ export const actions = {
       },
     })
     if (signUpError) {
-      return fail(400, { message: signUpError.message })
+      return fail(400, { message: JSON.stringify(signUpError) })
     }
     redirect(303, '/auth/signin?registered=1')
   },

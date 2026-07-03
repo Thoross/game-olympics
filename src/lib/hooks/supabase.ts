@@ -46,7 +46,11 @@ export const supabase: Handle = async ({ event, resolve }) => {
       // JWT validation has failed
       return { session: null, user: null }
     }
-    return { session, user }
+    // Return the session carrying the *authenticated* user from getUser(), not
+    // the unverified user proxied by getSession(). Otherwise serializing this
+    // session (e.g. in +layout.server.ts) reads the proxied user and triggers
+    // auth-js's "could be insecure" warning.
+    return { session: { ...session, user }, user }
   }
   return resolve(event, {
     filterSerializedResponseHeaders(name) {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
   import Button from '$lib/components/ui/button/button.svelte'
+  import SeasonStatusBadge from '$lib/components/SeasonStatusBadge.svelte'
 
   let { data, children } = $props()
 
@@ -19,7 +20,12 @@
 </svelte:head>
 
 <div class="flex items-center justify-between">
-  <h1>{data?.seasonData?.season_name}</h1>
+  <div class="flex items-center gap-3">
+    <h1>{data?.seasonData?.season_name}</h1>
+    {#if data?.seasonData?.season_status}
+      <SeasonStatusBadge seasonStatus={data.seasonData.season_status} />
+    {/if}
+  </div>
   {#if isAdmin && data.seasonData}
     <Button href={`/admin/sessions/add?season=${data.seasonData.season_id}`}>Add Session</Button>
   {/if}

@@ -1,8 +1,12 @@
 <script lang="ts">
   import * as Table from '$lib/components/ui/table'
   import * as Card from '$lib/components/ui/card'
+  import Button from '$lib/components/ui/button/button.svelte'
 
   let { data } = $props()
+
+  let isAdmin = $derived(data.user?.player_role === 'ADMIN')
+  let columnCount = $derived(isAdmin ? 4 : 3)
 
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString(undefined, {
@@ -40,18 +44,34 @@
           <Table.Head>Date</Table.Head>
           <Table.Head>Game</Table.Head>
           <Table.Head>Players &amp; Scores</Table.Head>
+          {#if isAdmin}
+            <Table.Head class="text-right">Actions</Table.Head>
+          {/if}
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {#each data.sessions as session}
+        {#each data.sessions as session (session.session_id)}
           <Table.Row>
-            <Table.Cell class="whitespace-nowrap">{formatDate(session.created_at)}</Table.Cell>
+            <Table.Cell class="whitespace-nowrap"
+              >{formatDate(session.session_date_played)}</Table.Cell
+            >
             <Table.Cell>{getGameName(session)}</Table.Cell>
             <Table.Cell>{getPlayers(session)}</Table.Cell>
+            {#if isAdmin}
+              <Table.Cell class="text-right">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  href="/admin/sessions/{session.session_id}/edit"
+                >
+                  Edit
+                </Button>
+              </Table.Cell>
+            {/if}
           </Table.Row>
         {:else}
           <Table.Row>
-            <Table.Cell colspan={3} class="h-24 text-center">No sessions yet.</Table.Cell>
+            <Table.Cell colspan={columnCount} class="h-24 text-center">No sessions yet.</Table.Cell>
           </Table.Row>
         {/each}
       </Table.Body>

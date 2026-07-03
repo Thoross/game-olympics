@@ -6,7 +6,7 @@ export const load: ServerLoad = async ({ params, locals }) => {
     .select(
       `
       session_id,
-      created_at,
+      session_date_played,
       games ( game_name ),
       player_sessions (
         player_session_score,
@@ -16,7 +16,7 @@ export const load: ServerLoad = async ({ params, locals }) => {
     `,
     )
     .eq('season_id', params.seasonId!)
-    .order('created_at', { ascending: false })
+    .order('session_date_played', { ascending: false })
 
   if (error) {
     throw new Error(error.message)

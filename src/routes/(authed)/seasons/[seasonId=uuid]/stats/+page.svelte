@@ -36,6 +36,7 @@
       key: p.player_id,
       label: p.player_name,
       color: CHART_COLORS[i % CHART_COLORS.length],
+      value: (d: Record<string, number | string>) => (d[p.player_id] as number) ?? 0,
     })),
   )
 
@@ -50,6 +51,7 @@
           key: p.player_id,
           label: p.player_name,
           color: CHART_COLORS[colorIdx % CHART_COLORS.length],
+          value: (d: Record<string, number | string>) => (d[p.player_id] as number) ?? 0,
         }
       })
   }
@@ -132,10 +134,6 @@
           <LineChart
             data={data.standingsOverTime}
             x={(d) => d.label}
-            y={(d) => {
-              const playerId = playerSeries[0].key
-              return d[playerId] as number
-            }}
             series={playerSeries}
             legend
             points
@@ -213,10 +211,6 @@
                 <LineChart
                   data={game.sessions}
                   x={(d) => d.label}
-                  y={(d) => {
-                    const playerId = Object.keys(d).find((key) => game.playerIds.includes(key))
-                    return playerId ? (d[playerId] as number) : 0
-                  }}
                   series={gameSeriesFor(game.playerIds)}
                   legend
                   points

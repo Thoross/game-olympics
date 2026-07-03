@@ -89,7 +89,11 @@ export const actions: Actions = {
 
     const { data: sessionData, error: sessionError } = await locals.supabase
       .from('sessions')
-      .insert({ game_id, season_id, ...(date_played ? { session_date_played: date_played } : {}) })
+      .insert({
+        game_id,
+        season_id,
+        ...(date_played ? { session_date_played: date_played } : {}),
+      })
       .select('session_id')
       .single()
 

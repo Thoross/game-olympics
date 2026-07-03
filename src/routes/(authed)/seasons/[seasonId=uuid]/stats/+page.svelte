@@ -192,6 +192,79 @@
     </Card.Content>
   </Card.Root>
 
+  <!-- Averages -->
+  <Card.Root>
+    <Card.Header>
+      <Card.Title>Averages</Card.Title>
+    </Card.Header>
+    <Card.Content>
+      {#if data.seasonAverages.length === 0}
+        <div
+          class="flex h-24 items-center justify-center rounded-md border text-sm text-muted-foreground"
+        >
+          No sessions yet.
+        </div>
+      {:else}
+        <Tabs.Root value="season" class="gap-6">
+          <Tabs.List>
+            <Tabs.Trigger value="season">Season</Tabs.Trigger>
+            {#each data.gameAverages as game (game.game_id)}
+              <Tabs.Trigger value={game.game_id}>{game.game_name}</Tabs.Trigger>
+            {/each}
+          </Tabs.List>
+
+          <!-- Season tab: sorted by Avg Score desc (tiebreak Avg Position asc) -->
+          <Tabs.Content value="season">
+            <Table.Root>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Player</Table.Head>
+                  <Table.Head class="text-right">Avg Score</Table.Head>
+                  <Table.Head class="text-right">Avg Position</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {#each data.seasonAverages as row (row.player_id)}
+                  <Table.Row>
+                    <Table.Cell>{row.player_name}</Table.Cell>
+                    <Table.Cell class="text-right">{row.avg_score.toFixed(2)}</Table.Cell>
+                    <Table.Cell class="text-right">{row.avg_position.toFixed(2)}</Table.Cell>
+                  </Table.Row>
+                {/each}
+              </Table.Body>
+            </Table.Root>
+          </Tabs.Content>
+
+          <!-- One tab per game: players who played it, sorted by Avg Score desc -->
+          {#each data.gameAverages as game (game.game_id)}
+            <Tabs.Content value={game.game_id}>
+              <Table.Root>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head>Player</Table.Head>
+                    <Table.Head class="text-right">Avg Score</Table.Head>
+                    <Table.Head class="text-right">Avg Position</Table.Head>
+                    <Table.Head class="text-right">Total Score</Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {#each game.rows as row (row.player_id)}
+                    <Table.Row>
+                      <Table.Cell>{row.player_name}</Table.Cell>
+                      <Table.Cell class="text-right">{row.avg_score.toFixed(2)}</Table.Cell>
+                      <Table.Cell class="text-right">{row.avg_position.toFixed(2)}</Table.Cell>
+                      <Table.Cell class="text-right">{row.total_score}</Table.Cell>
+                    </Table.Row>
+                  {/each}
+                </Table.Body>
+              </Table.Root>
+            </Tabs.Content>
+          {/each}
+        </Tabs.Root>
+      {/if}
+    </Card.Content>
+  </Card.Root>
+
   <!-- Score per game -->
   {#if data.scoresByGame.length > 0}
     <Card.Root>

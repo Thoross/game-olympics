@@ -7,12 +7,21 @@ export type PlayerStanding = {
   standings_points: number
   avg_score: number
   avg_position: number
+  games_chosen: number
+  // Newest-first, up to 4 finish positions (most recent session first).
+  // Values may be 0 for missing/unknown positions — the view renders those as a dash.
+  last_positions: number[]
+  // Nullable dues paid date (ISO date string) merged in from season_players; null = unpaid.
+  date_paid: string | null
 }
 
 export type RawPlayerSession = {
   player_session_score: number | null
   player_session_position: number | null
-  player: { player_id: string; player_name: string } | { player_id: string; player_name: string }[] | null
+  player:
+    | { player_id: string; player_name: string }
+    | { player_id: string; player_name: string }[]
+    | null
 }
 
 export type RawSession = {
@@ -22,8 +31,24 @@ export type RawSession = {
   player_sessions: RawPlayerSession[] | null
 }
 
-export function buildStandings(sessions: RawSession[], multipliers: number[] | null): PlayerStanding[] {
-  const playerMap = new Map<string, PlayerStanding & { _total_score: number }>()
+// Counts distinct games chosen per player from season_games rows (chosen_by = player_id).
+// Merged onto standings in the load, exactly like date_paid.
+export function countGamesChosen(seasonGames: { chosen_by: string | null }[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const sg of seasonGames) {
+    if (sg.chosen_by) counts.set(sg.chosen_by, (counts.get(sg.chosen_by) ?? 0) + 1)
+  }
+  return counts
+}
+
+export function buildStandings(
+  sessions: RawSession[],
+  multipliers: number[] | null,
+): PlayerStanding[] {
+  const playerMap = new Map<
+    string,
+    Omit<PlayerStanding, 'last_positions'> & { _total_score: number; _positions: number[] }
+  >()
   const playCountByGame = new Map<string, number>()
 
   for (const session of sessions) {
@@ -42,6 +67,7 @@ export function buildStandings(sessions: RawSession[], multipliers: number[] | n
         existing.games_played++
         existing.standings_points += points
         existing._total_score += score
+        existing._positions.push(position)
         existing.avg_score = existing._total_score / existing.games_played
         existing.avg_position =
           (existing.avg_position * (existing.games_played - 1) + position) / existing.games_played
@@ -52,14 +78,31 @@ export function buildStandings(sessions: RawSession[], multipliers: number[] | n
           games_played: 1,
           standings_points: points,
           _total_score: score,
+          _positions: [position],
           avg_score: score,
           avg_position: position,
+          games_chosen: 0,
+          date_paid: null,
         })
       }
     }
   }
 
-  return Array.from(playerMap.values())
-    .map(({ _total_score: _, ...rest }) => rest)
-    .sort((a, b) => b.standings_points - a.standings_points || b.avg_score - a.avg_score)
+  return (
+    Array.from(playerMap.values())
+      .map((p) => ({
+        player_id: p.player_id,
+        player_name: p.player_name,
+        games_played: p.games_played,
+        standings_points: p.standings_points,
+        avg_score: p.avg_score,
+        avg_position: p.avg_position,
+        games_chosen: p.games_chosen,
+        // Sessions arrive oldest-first, so the last 4 reversed gives newest-first.
+        last_positions: p._positions.slice(-4).reverse(),
+        date_paid: p.date_paid,
+      }))
+      // Sort: standings_points desc, then avg_score desc (tiebreaker retained though not displayed).
+      .sort((a, b) => b.standings_points - a.standings_points || b.avg_score - a.avg_score)
+  )
 }

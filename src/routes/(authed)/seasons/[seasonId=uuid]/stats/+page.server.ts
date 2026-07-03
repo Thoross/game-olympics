@@ -6,6 +6,8 @@ import {
   buildSessionBreakdowns,
   buildStandingsOverTime,
   buildScoresByGame,
+  buildSeasonAverages,
+  buildGameAverages,
 } from './utils.server.js'
 
 export const load: ServerLoad = async ({ params, locals, parent }) => {
@@ -69,6 +71,16 @@ export const load: ServerLoad = async ({ params, locals, parent }) => {
   const sessionBreakdowns = buildSessionBreakdowns(sessions)
   const standingsOverTime = buildStandingsOverTime(sessions, players)
   const scoresByGame = buildScoresByGame(sessions)
+  const seasonAverages = buildSeasonAverages(sessions)
+  const gameAverages = buildGameAverages(sessions)
 
-  return { gameStats, sessionBreakdowns, standingsOverTime, scoresByGame, players }
+  return {
+    gameStats,
+    sessionBreakdowns,
+    standingsOverTime,
+    scoresByGame,
+    players,
+    seasonAverages,
+    gameAverages,
+  }
 }

@@ -6,6 +6,8 @@ import {
   buildSessionBreakdowns,
   buildStandingsOverTime,
   buildScoresByGame,
+  buildSeasonAverages,
+  buildGameAverages,
   type NormalizedSession,
 } from '$routes/(authed)/seasons/[seasonId=uuid]/stats/utils.server'
 
@@ -185,7 +187,9 @@ describe('buildSessionBreakdowns', () => {
   })
 
   it('formats the date in en-US locale', () => {
-    const sessions = [makeSession({ session_date_played: '2024-03-15T12:00:00Z', player_sessions: [] })]
+    const sessions = [
+      makeSession({ session_date_played: '2024-03-15T12:00:00Z', player_sessions: [] }),
+    ]
     const [breakdown] = buildSessionBreakdowns(sessions)
     expect(breakdown.date).toBe('Mar 15, 2024')
   })
@@ -342,5 +346,122 @@ describe('buildScoresByGame', () => {
 
   it('returns empty array for no sessions', () => {
     expect(buildScoresByGame([])).toEqual([])
+  })
+})
+
+// ─── buildSeasonAverages ──────────────────────────────────────────────────────
+
+describe('buildSeasonAverages', () => {
+  it('returns empty array for no sessions', () => {
+    expect(buildSeasonAverages([])).toEqual([])
+  })
+
+  it('averages a player across all their sessions', () => {
+    const sessions = [
+      makeSession({
+        session_id: 's-1',
+        game_id: 'g-catan',
+        player_sessions: [{ ...alice, score: 10, position: 1, standings_points: 4 }],
+      }),
+      makeSession({
+        session_id: 's-2',
+        game_id: 'g-ticket',
+        player_sessions: [{ ...alice, score: 6, position: 3, standings_points: 2 }],
+      }),
+    ]
+    const [row] = buildSeasonAverages(sessions)
+    expect(row.player_id).toBe(alice.player_id)
+    expect(row.avg_score).toBe(8) // (10 + 6) / 2
+    expect(row.avg_position).toBe(2) // (1 + 3) / 2
+  })
+
+  it('handles single-session players', () => {
+    const sessions = [
+      makeSession({ player_sessions: [{ ...bob, score: 5, position: 2, standings_points: 3 }] }),
+    ]
+    const [row] = buildSeasonAverages(sessions)
+    expect(row.avg_score).toBe(5)
+    expect(row.avg_position).toBe(2)
+  })
+
+  it('sorts by avg_score desc, tiebreak avg_position asc', () => {
+    const sessions = [
+      makeSession({
+        session_id: 's-1',
+        player_sessions: [
+          { ...alice, score: 10, position: 2, standings_points: 3 },
+          { ...bob, score: 10, position: 1, standings_points: 4 },
+          { ...carol, score: 5, position: 3, standings_points: 2 },
+        ],
+      }),
+    ]
+    const result = buildSeasonAverages(sessions)
+    // Alice & Bob tie on avg_score 10 → Bob first (lower avg_position); Carol last
+    expect(result.map((r) => r.player_id)).toEqual([
+      bob.player_id,
+      alice.player_id,
+      carol.player_id,
+    ])
+  })
+})
+
+// ─── buildGameAverages ────────────────────────────────────────────────────────
+
+describe('buildGameAverages', () => {
+  it('returns empty array for no sessions', () => {
+    expect(buildGameAverages([])).toEqual([])
+  })
+
+  it('computes per-game averages and total score, only for players who played that game', () => {
+    const sessions = [
+      makeSession({
+        session_id: 's-1',
+        game_id: 'g-catan',
+        game_name: 'Catan',
+        player_sessions: [
+          { ...alice, score: 10, position: 1, standings_points: 4 },
+          { ...bob, score: 8, position: 2, standings_points: 3 },
+        ],
+      }),
+      makeSession({
+        session_id: 's-2',
+        game_id: 'g-catan',
+        game_name: 'Catan',
+        player_sessions: [{ ...alice, score: 4, position: 2, standings_points: 3 }],
+      }),
+      makeSession({
+        session_id: 's-3',
+        game_id: 'g-ticket',
+        game_name: 'Ticket to Ride',
+        player_sessions: [{ ...carol, score: 20, position: 1, standings_points: 4 }],
+      }),
+    ]
+    const result = buildGameAverages(sessions)
+    // Catan played twice → first (most-played order)
+    expect(result[0].game_id).toBe('g-catan')
+    expect(result[1].game_id).toBe('g-ticket')
+
+    const catanAlice = result[0].rows.find((r) => r.player_id === alice.player_id)!
+    expect(catanAlice.avg_score).toBe(7) // (10 + 4) / 2
+    expect(catanAlice.avg_position).toBe(1.5) // (1 + 2) / 2
+    expect(catanAlice.total_score).toBe(14) // 10 + 4
+
+    // Bob only played Catan once; Carol never played Catan
+    expect(result[0].rows.map((r) => r.player_id)).not.toContain(carol.player_id)
+    expect(result[1].rows.map((r) => r.player_id)).toEqual([carol.player_id])
+  })
+
+  it('sorts rows within a game by avg_score desc', () => {
+    const sessions = [
+      makeSession({
+        game_id: 'g-catan',
+        player_sessions: [
+          { ...alice, score: 5, position: 2, standings_points: 3 },
+          { ...bob, score: 12, position: 1, standings_points: 4 },
+        ],
+      }),
+    ]
+    const [game] = buildGameAverages(sessions)
+    expect(game.rows.map((r) => r.player_id)).toEqual([bob.player_id, alice.player_id])
   })
 })

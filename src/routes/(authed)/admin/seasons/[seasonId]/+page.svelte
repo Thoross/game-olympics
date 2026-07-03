@@ -30,6 +30,22 @@
     if (!multipliers || multipliers.length === 0) return 'No schedule'
     return multipliers.map((m) => `${m}×`).join(' → ')
   }
+
+  function todayLocal() {
+    const d = new Date()
+    const off = d.getTimezoneOffset()
+    return new Date(d.getTime() - off * 60_000).toISOString().split('T')[0]
+  }
+
+  // Parse the 'YYYY-MM-DD' dues date as a local day to avoid a UTC off-by-one.
+  function formatDatePaid(date: string): string {
+    const [y, m, d] = date.slice(0, 10).split('-').map(Number)
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
 </script>
 
 <svelte:head>
@@ -37,7 +53,7 @@
 </svelte:head>
 
 <div class="mb-2">
-  <a href="/admin/seasons" class="text-muted-foreground hover:text-foreground text-sm">
+  <a href="/admin/seasons" class="text-sm text-muted-foreground hover:text-foreground">
     ← Season Management
   </a>
 </div>
@@ -86,7 +102,7 @@
     </div>
 
     {#if form?.updateError}
-      <p class="text-destructive text-sm">{form.updateError}</p>
+      <p class="text-sm text-destructive">{form.updateError}</p>
     {/if}
     {#if form?.updateSuccess}
       <p class="text-sm text-green-600">Saved.</p>
@@ -105,7 +121,7 @@
 <!-- Scoring Schedule -->
 <section class="max-w-lg">
   <h2 class="mb-2 text-lg font-semibold">Scoring Schedule</h2>
-  <p class="text-muted-foreground mb-3 text-sm">
+  <p class="mb-3 text-sm text-muted-foreground">
     {formatSchedule(data.schedule?.multipliers ?? null)}
   </p>
   <a
@@ -126,19 +142,46 @@
   {#if data.seasonPlayers.length > 0}
     <ul class="mb-4 divide-y rounded-md border">
       {#each data.seasonPlayers as sp (sp.season_players_id)}
-        <li class="flex items-center justify-between px-4 py-2">
+        <li class="flex items-center justify-between gap-4 px-4 py-2">
           <span>{sp.player?.player_name ?? '—'}</span>
-          <form method="POST" action="?/removePlayer" use:enhance>
-            <input type="hidden" name="season_players_id" value={sp.season_players_id} />
-            <Button type="submit" variant="ghost" size="sm" class="text-muted-foreground hover:text-destructive">
-              Remove
-            </Button>
-          </form>
+          <div class="flex items-center gap-4">
+            <!-- Dues: ticking stamps today's date, unticking clears to null (unpaid) -->
+            <form method="POST" action="?/setDuesPaid" use:enhance>
+              <input type="hidden" name="season_players_id" value={sp.season_players_id} />
+              <input
+                type="hidden"
+                name="date_paid"
+                value={sp.date_paid != null ? '' : todayLocal()}
+              />
+              <label class="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={sp.date_paid != null}
+                  onchange={(e) => e.currentTarget.form?.requestSubmit()}
+                />
+                Dues paid{sp.date_paid ? ` (${formatDatePaid(sp.date_paid)})` : ''}
+              </label>
+            </form>
+            <form method="POST" action="?/removePlayer" use:enhance>
+              <input type="hidden" name="season_players_id" value={sp.season_players_id} />
+              <Button
+                type="submit"
+                variant="ghost"
+                size="sm"
+                class="text-muted-foreground hover:text-destructive"
+              >
+                Remove
+              </Button>
+            </form>
+          </div>
         </li>
       {/each}
     </ul>
+    {#if form?.duesError}
+      <p class="mb-4 text-sm text-destructive">{form.duesError}</p>
+    {/if}
   {:else}
-    <p class="text-muted-foreground mb-4 text-sm">No players in this season yet.</p>
+    <p class="mb-4 text-sm text-muted-foreground">No players in this season yet.</p>
   {/if}
 
   <!-- Add player -->
@@ -179,9 +222,50 @@
     </form>
 
     {#if form?.addPlayerError}
-      <p class="text-destructive mt-2 text-sm">{form.addPlayerError}</p>
+      <p class="mt-2 text-sm text-destructive">{form.addPlayerError}</p>
     {/if}
   {:else if data.seasonPlayers.length > 0}
-    <p class="text-muted-foreground text-sm">All players are already in this season.</p>
+    <p class="text-sm text-muted-foreground">All players are already in this season.</p>
+  {/if}
+</section>
+
+<hr class="my-8" />
+
+<!-- Games Section: who chose each game played in this season -->
+<section class="max-w-lg">
+  <h2 class="mb-4 text-lg font-semibold">Games</h2>
+
+  {#if data.seasonGames.length > 0}
+    <ul class="mb-4 divide-y rounded-md border">
+      {#each data.seasonGames as g (g.game_id)}
+        <li class="flex items-center justify-between gap-4 px-4 py-2">
+          <span>{g.game_name}</span>
+          <form method="POST" action="?/setGameChooser" use:enhance>
+            <input type="hidden" name="game_id" value={g.game_id} />
+            <label class="flex items-center gap-2 text-sm">
+              Chosen by
+              <select
+                name="chosen_by"
+                value={g.chosen_by ?? ''}
+                onchange={(e) => e.currentTarget.form?.requestSubmit()}
+                class="rounded-md border bg-transparent px-2 py-1 text-sm"
+              >
+                <option value="">— none —</option>
+                {#each data.seasonPlayers as sp (sp.season_players_id)}
+                  {#if sp.player}
+                    <option value={sp.player.player_id}>{sp.player.player_name}</option>
+                  {/if}
+                {/each}
+              </select>
+            </label>
+          </form>
+        </li>
+      {/each}
+    </ul>
+    {#if form?.gameChooserError}
+      <p class="mb-4 text-sm text-destructive">{form.gameChooserError}</p>
+    {/if}
+  {:else}
+    <p class="mb-4 text-sm text-muted-foreground">No games have been played in this season yet.</p>
   {/if}
 </section>

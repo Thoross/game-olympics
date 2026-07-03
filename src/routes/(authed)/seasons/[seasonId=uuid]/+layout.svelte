@@ -9,6 +9,7 @@
     { label: 'Standings', href: 'standings' },
     { label: 'Stats', href: 'stats' },
     { label: 'Sessions', href: 'sessions' },
+    { label: 'Games', href: 'games' },
   ]
 
   let activeTab = $derived($page.url.pathname.split('/').at(-1) ?? 'standings')

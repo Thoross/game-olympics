@@ -16,6 +16,135 @@ export type NormalizedSession = {
 
 export type Player = { player_id: string; player_name: string }
 
+export type SeasonAverageRow = {
+  player_id: string
+  player_name: string
+  avg_score: number
+  avg_position: number
+}
+
+/**
+ * Per-player averages across ALL of a player's sessions this season.
+ * Sorted by avg_score desc, tiebreak avg_position asc.
+ */
+export function buildSeasonAverages(sessions: NormalizedSession[]): SeasonAverageRow[] {
+  const map = new Map<
+    string,
+    {
+      player_id: string
+      player_name: string
+      total_score: number
+      total_position: number
+      count: number
+    }
+  >()
+  for (const s of sessions) {
+    for (const ps of s.player_sessions) {
+      if (!ps.player_id) continue
+      const existing = map.get(ps.player_id)
+      if (existing) {
+        existing.total_score += ps.score
+        existing.total_position += ps.position
+        existing.count++
+      } else {
+        map.set(ps.player_id, {
+          player_id: ps.player_id,
+          player_name: ps.player_name,
+          total_score: ps.score,
+          total_position: ps.position,
+          count: 1,
+        })
+      }
+    }
+  }
+  return Array.from(map.values())
+    .map((p) => ({
+      player_id: p.player_id,
+      player_name: p.player_name,
+      avg_score: p.total_score / p.count,
+      avg_position: p.total_position / p.count,
+    }))
+    .sort((a, b) => b.avg_score - a.avg_score || a.avg_position - b.avg_position)
+}
+
+export type GameAverageRow = SeasonAverageRow & { total_score: number }
+
+export type GameAverages = {
+  game_id: string
+  game_name: string
+  rows: GameAverageRow[]
+}
+
+/**
+ * Per-game, per-player averages (that game's sessions only), plus each player's
+ * total score in the game. Games ordered most-played first (matching buildGameStats);
+ * rows within a game sorted by avg_score desc, tiebreak avg_position asc.
+ * Only players who actually played the game appear.
+ */
+export function buildGameAverages(sessions: NormalizedSession[]): GameAverages[] {
+  const gameMap = new Map<
+    string,
+    {
+      game_id: string
+      game_name: string
+      times_played: number
+      players: Map<
+        string,
+        {
+          player_id: string
+          player_name: string
+          total_score: number
+          total_position: number
+          count: number
+        }
+      >
+    }
+  >()
+
+  for (const s of sessions) {
+    if (!s.game_id) continue
+    let game = gameMap.get(s.game_id)
+    if (!game) {
+      game = { game_id: s.game_id, game_name: s.game_name, times_played: 0, players: new Map() }
+      gameMap.set(s.game_id, game)
+    }
+    game.times_played++
+    for (const ps of s.player_sessions) {
+      if (!ps.player_id) continue
+      const existing = game.players.get(ps.player_id)
+      if (existing) {
+        existing.total_score += ps.score
+        existing.total_position += ps.position
+        existing.count++
+      } else {
+        game.players.set(ps.player_id, {
+          player_id: ps.player_id,
+          player_name: ps.player_name,
+          total_score: ps.score,
+          total_position: ps.position,
+          count: 1,
+        })
+      }
+    }
+  }
+
+  return Array.from(gameMap.values())
+    .sort((a, b) => b.times_played - a.times_played)
+    .map((g) => ({
+      game_id: g.game_id,
+      game_name: g.game_name,
+      rows: Array.from(g.players.values())
+        .map((p) => ({
+          player_id: p.player_id,
+          player_name: p.player_name,
+          avg_score: p.total_score / p.count,
+          avg_position: p.total_position / p.count,
+          total_score: p.total_score,
+        }))
+        .sort((a, b) => b.avg_score - a.avg_score || a.avg_position - b.avg_position),
+    }))
+}
+
 export function buildGameStats(sessions: NormalizedSession[]) {
   const gameMap = new Map<string, { game_id: string; game_name: string; times_played: number }>()
   for (const s of sessions) {

@@ -44,7 +44,13 @@ function makeNormalizedSession(
   gameId: string,
   gameName: string,
   date: string,
-  participants: Array<{ id: string; name: string; score: number; position: number; points: number }>,
+  participants: Array<{
+    id: string
+    name: string
+    score: number
+    position: number
+    points: number
+  }>,
 ): NormalizedSession {
   return {
     session_id: id,
@@ -70,9 +76,15 @@ describe('buildStandings', () => {
     it('1st place player accumulates 4 + 8 + 12 = 24 standings_points', () => {
       expect.assertions(1)
       const sessions = [
-        makeSession('s1', 'gameA', '2024-01-01', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s2', 'gameA', '2024-01-08', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s3', 'gameA', '2024-01-15', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
+        makeSession('s1', 'gameA', '2024-01-01', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s2', 'gameA', '2024-01-08', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s3', 'gameA', '2024-01-15', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
       ]
       const standings = buildStandings(sessions, [1, 2, 3])
       const alice = standings.find((s) => s.player_id === 'p1')
@@ -84,11 +96,19 @@ describe('buildStandings', () => {
     it('1st place in game B session 1 gets 4 * multiplier[0] = 4', () => {
       expect.assertions(1)
       const sessions = [
-        makeSession('s1', 'gameA', '2024-01-01', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s2', 'gameA', '2024-01-08', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s3', 'gameA', '2024-01-15', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
+        makeSession('s1', 'gameA', '2024-01-01', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s2', 'gameA', '2024-01-08', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s3', 'gameA', '2024-01-15', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
         // Game B's first play — counter should be 1, not 4
-        makeSession('s4', 'gameB', '2024-01-22', [{ id: 'p1', name: 'Alice', score: 20, position: 1 }]),
+        makeSession('s4', 'gameB', '2024-01-22', [
+          { id: 'p1', name: 'Alice', score: 20, position: 1 },
+        ]),
       ]
       const standings = buildStandings(sessions, [1, 2, 3])
       const alice = standings.find((s) => s.player_id === 'p1')
@@ -101,10 +121,18 @@ describe('buildStandings', () => {
     it('sessions 3 and 4 use multiplier[1] = 2', () => {
       expect.assertions(1)
       const sessions = [
-        makeSession('s1', 'gameA', '2024-01-01', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s2', 'gameA', '2024-01-08', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s3', 'gameA', '2024-01-15', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s4', 'gameA', '2024-01-22', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
+        makeSession('s1', 'gameA', '2024-01-01', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s2', 'gameA', '2024-01-08', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s3', 'gameA', '2024-01-15', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s4', 'gameA', '2024-01-22', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
       ]
       const standings = buildStandings(sessions, [1, 2])
       const alice = standings.find((s) => s.player_id === 'p1')
@@ -117,9 +145,15 @@ describe('buildStandings', () => {
     it('1st place across 3 sessions of the same game gets 4 + 4 + 4 = 12', () => {
       expect.assertions(1)
       const sessions = [
-        makeSession('s1', 'gameA', '2024-01-01', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s2', 'gameA', '2024-01-08', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
-        makeSession('s3', 'gameA', '2024-01-15', [{ id: 'p1', name: 'Alice', score: 10, position: 1 }]),
+        makeSession('s1', 'gameA', '2024-01-01', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s2', 'gameA', '2024-01-08', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
+        makeSession('s3', 'gameA', '2024-01-15', [
+          { id: 'p1', name: 'Alice', score: 10, position: 1 },
+        ]),
       ]
       const standings = buildStandings(sessions, null)
       const alice = standings.find((s) => s.player_id === 'p1')

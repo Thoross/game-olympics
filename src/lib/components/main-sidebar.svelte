@@ -21,6 +21,13 @@
   }
 
   let isAdmin = $derived(user?.player_role === 'ADMIN')
+  let inProgressSeasons = $derived(page.data.inProgressSeasons ?? [])
+
+  const sidebar = Sidebar.useSidebar()
+
+  function closeMobileNav() {
+    if (sidebar.isMobile) sidebar.setOpenMobile(false)
+  }
 
   let items = [
     {
@@ -73,9 +80,28 @@
               isActive={page.url.pathname.split('/')[1] === item.url.substring(1)}
             >
               {#snippet child({ props })}
-                <a href={resolve(item.url)} {...props}>{item.title}</a>
+                <a href={resolve(item.url)} {...props} onclick={closeMobileNav}>{item.title}</a>
               {/snippet}
             </Sidebar.MenuButton>
+            {#if item.title === 'Seasons' && inProgressSeasons.length > 0}
+              <Sidebar.MenuSub>
+                {#each inProgressSeasons as season (season.season_id)}
+                  <Sidebar.MenuSubItem>
+                    <Sidebar.MenuSubButton
+                      isActive={page.url.pathname.startsWith(`/seasons/${season.season_id}`)}
+                    >
+                      {#snippet child({ props })}
+                        <a
+                          href={resolve(`/seasons/${season.season_id}`)}
+                          {...props}
+                          onclick={closeMobileNav}>{season.season_name}</a
+                        >
+                      {/snippet}
+                    </Sidebar.MenuSubButton>
+                  </Sidebar.MenuSubItem>
+                {/each}
+              </Sidebar.MenuSub>
+            {/if}
           </Sidebar.MenuItem>
         {/each}
       </Sidebar.Menu>
@@ -89,7 +115,7 @@
             <Sidebar.MenuItem>
               <Sidebar.MenuButton isActive={page.url.pathname === item.url}>
                 {#snippet child({ props })}
-                  <a href={resolve(item.url)} {...props}>{item.title}</a>
+                  <a href={resolve(item.url)} {...props} onclick={closeMobileNav}>{item.title}</a>
                 {/snippet}
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>

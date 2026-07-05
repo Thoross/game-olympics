@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
+  import { resolve } from '$app/paths'
   import Button from '$lib/components/ui/button/button.svelte'
   import Input from '$lib/components/ui/input/input.svelte'
   import Label from '$lib/components/ui/label/label.svelte'
@@ -27,7 +28,7 @@
 </svelte:head>
 
 <div class="mb-2">
-  <a href="/admin/seasons" class="text-muted-foreground hover:text-foreground text-sm">
+  <a href={resolve('/admin/seasons')} class="text-sm text-muted-foreground hover:text-foreground">
     ← Season Management
   </a>
 </div>
@@ -49,7 +50,7 @@
     <Label for="seasonName">Season Name</Label>
     <Input id="seasonName" name="seasonName" type="text" placeholder="Spring 2026" required />
     {#if form?.errors?.seasonName}
-      <p class="text-destructive text-sm">{form.errors.seasonName}</p>
+      <p class="text-sm text-destructive">{form.errors.seasonName}</p>
     {/if}
   </div>
 
@@ -59,7 +60,7 @@
     </Label>
     <Input id="seasonDescription" name="seasonDescription" type="text" />
     {#if form?.errors?.seasonDescription}
-      <p class="text-destructive text-sm">{form.errors.seasonDescription}</p>
+      <p class="text-sm text-destructive">{form.errors.seasonDescription}</p>
     {/if}
   </div>
 
@@ -74,12 +75,12 @@
       </Select.Content>
     </Select.Root>
     {#if form?.errors?.seasonStatus}
-      <p class="text-destructive text-sm">{form.errors.seasonStatus}</p>
+      <p class="text-sm text-destructive">{form.errors.seasonStatus}</p>
     {/if}
   </div>
 
   {#if form?.message}
-    <p class="text-destructive text-sm">{form.message}</p>
+    <p class="text-sm text-destructive">{form.message}</p>
   {/if}
 
   <div class="flex gap-2">

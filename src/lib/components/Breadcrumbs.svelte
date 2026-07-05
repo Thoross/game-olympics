@@ -6,15 +6,21 @@
    * Maps route parameter names to a function that resolves a display label from page data.
    * Add entries here when new parameterized routes are created.
    */
-  const paramLabelResolvers: Record<string, (data: Record<string, any>) => string | undefined> = {
-    gameId: (data) => data.game?.game_name,
-    seasonId: (data) => data.seasonData?.season_name,
-  }
+  const paramLabelResolvers: Record<string, (data: Record<string, unknown>) => string | undefined> =
+    {
+      gameId: (data) => (data.game as { game_name?: string } | undefined)?.game_name,
+      // `seasonData` on the public season route; `season` on the admin edit route.
+      seasonId: (data) =>
+        (data.seasonData as { season_name?: string } | undefined)?.season_name ??
+        (data.season as { season_name?: string } | undefined)?.season_name,
+    }
 
   let segments = $derived(page.url.pathname.split('/').filter((segment) => segment.length > 0))
 
   let routeSegments = $derived(
-    (page.route.id ?? '').split('/').filter((segment) => segment.length > 0 && !segment.startsWith('(')),
+    (page.route.id ?? '')
+      .split('/')
+      .filter((segment) => segment.length > 0 && !segment.startsWith('(')),
   )
 
   let breadcrumbItems = $derived([
@@ -42,7 +48,7 @@
 
 <Breadcrumbs.Root>
   <Breadcrumbs.List>
-    {#each breadcrumbItems as item, index}
+    {#each breadcrumbItems as item, index (item.href)}
       <Breadcrumbs.Item>
         {#if index === breadcrumbItems.length - 1}
           <Breadcrumbs.Page>{item.label}</Breadcrumbs.Page>

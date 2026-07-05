@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import SeasonStatusBadge from '$lib/components/SeasonStatusBadge.svelte'
   import * as Table from '$lib/components/ui/table'
   import * as Card from '$lib/components/ui/card'
@@ -33,7 +34,10 @@
         {#each data.seasons as season (season.season_id)}
           <Table.Row>
             <Table.Cell>
-              <a href="/admin/seasons/{season.season_id}" class="font-medium hover:underline">
+              <a
+                href={resolve(`/admin/seasons/${season.season_id}`)}
+                class="font-medium hover:underline"
+              >
                 {season.season_name}
               </a>
             </Table.Cell>

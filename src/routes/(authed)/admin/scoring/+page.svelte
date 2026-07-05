@@ -64,12 +64,9 @@
               <SeasonStatusBadge seasonStatus={season.season_status} />
             </div>
             <div class="flex items-center gap-4">
-              <span class="text-muted-foreground text-sm">{formatSchedule(season.multipliers)}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onclick={() => toggleExpanded(season.season_id)}
+              <span class="text-sm text-muted-foreground">{formatSchedule(season.multipliers)}</span
               >
+              <Button variant="outline" size="sm" onclick={() => toggleExpanded(season.season_id)}>
                 {expanded[season.season_id] ? 'Close' : 'Edit'}
               </Button>
             </div>
@@ -94,7 +91,7 @@
                 <p class="text-sm font-medium">Multiplier steps</p>
                 {#each steps[season.season_id] ?? [1] as _step, i (i)}
                   <div class="flex items-center gap-2">
-                    <span class="text-muted-foreground w-6 text-right text-sm">{i + 1}.</span>
+                    <span class="w-6 text-right text-sm text-muted-foreground">{i + 1}.</span>
                     <Input
                       type="number"
                       name="multipliers"
@@ -125,7 +122,7 @@
               </div>
 
               {#if form?.season_id === season.season_id && form?.errors?.multipliers}
-                <p class="text-destructive text-sm">{form.errors.multipliers}</p>
+                <p class="text-sm text-destructive">{form.errors.multipliers}</p>
               {/if}
 
               {#if form?.upsertSuccess && form?.season_id === season.season_id}

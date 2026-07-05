@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import * as Table from '$lib/components/ui/table'
   import * as Card from '$lib/components/ui/card'
 
@@ -21,7 +22,11 @@
       <Table.Body>
         {#each data.games as game (game.game_id)}
           <Table.Row>
-            <Table.Cell>{game.game_name}</Table.Cell>
+            <Table.Cell>
+              <a href={resolve(`/games/${game.game_id}`)} class="hover:underline"
+                >{game.game_name}</a
+              >
+            </Table.Cell>
             <Table.Cell>{game.dates}</Table.Cell>
             <Table.Cell>{game.chosen_by ?? '—'}</Table.Cell>
           </Table.Row>

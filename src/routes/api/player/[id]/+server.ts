@@ -1,8 +1,8 @@
-import type { RequestEvent } from '@sveltejs/kit'
 import { error } from '@sveltejs/kit'
 import { requireAdmin, isAdmin } from '$lib/server/authorization'
+import type { RequestHandler } from './$types'
 
-export const GET = async ({ locals, params }) => {
+export const GET: RequestHandler = async ({ locals, params }) => {
   const { id } = params
   try {
     const { data, error } = await locals.supabase
@@ -25,7 +25,7 @@ export const GET = async ({ locals, params }) => {
   }
 }
 
-export const PUT = async ({ request, params, locals }: RequestEvent) => {
+export const PUT: RequestHandler = async ({ request, params, locals }) => {
   const { id } = params
   if (locals.user?.player_id !== id && !isAdmin(locals.user)) {
     error(403, 'Forbidden')
@@ -50,7 +50,7 @@ export const PUT = async ({ request, params, locals }: RequestEvent) => {
   }
 }
 
-export const DELETE = async ({ params, locals }: RequestEvent) => {
+export const DELETE: RequestHandler = async ({ params, locals }) => {
   requireAdmin(locals.user)
   const { id } = params
   try {

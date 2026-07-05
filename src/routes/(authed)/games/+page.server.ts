@@ -1,5 +1,4 @@
 import type { ServerLoad } from '@sveltejs/kit'
-import { buildGameStats } from '$routes/(authed)/seasons/[seasonId=uuid]/stats/utils.server'
 
 export const load: ServerLoad = async ({ locals, url }) => {
   let query = locals.supabase

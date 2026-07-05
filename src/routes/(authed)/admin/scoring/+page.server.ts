@@ -16,9 +16,7 @@ export const load: ServerLoad = async ({ locals, url }) => {
     locals.supabase.from('season_scoring_schedules').select('season_id, multipliers'),
   ])
 
-  const scheduleMap = new Map(
-    (schedulesResult.data ?? []).map((s) => [s.season_id, s.multipliers]),
-  )
+  const scheduleMap = new Map((schedulesResult.data ?? []).map((s) => [s.season_id, s.multipliers]))
 
   const seasons = (seasonsResult.data ?? []).map((s) => ({
     ...s,

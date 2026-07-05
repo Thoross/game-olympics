@@ -25,7 +25,9 @@
     />
     {#snippet footer()}
       <p class="text-center">
-        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Back to sign in</a>
+        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline"
+          >Back to sign in</a
+        >
       </p>
     {/snippet}
   </AuthCard>
@@ -71,7 +73,9 @@
     </form>
     {#snippet footer()}
       <p class="text-center">
-        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Back to sign in</a>
+        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline"
+          >Back to sign in</a
+        >
       </p>
     {/snippet}
   </AuthCard>

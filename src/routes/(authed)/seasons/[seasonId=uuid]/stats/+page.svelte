@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import { LineChart, Tooltip } from 'layerchart'
   import { format } from '@layerstack/utils'
   import * as Table from '$lib/components/ui/table'
@@ -84,7 +85,7 @@
       {:else}
         <Tabs.Root value={data.sessionBreakdowns[0].session_id} class="gap-6">
           <Tabs.List>
-            {#each data.sessionBreakdowns as session, i}
+            {#each data.sessionBreakdowns as session, i (session.session_id)}
               <Tabs.Trigger
                 value={session.session_id}
                 class="data-[state='active']:text-primary-foreground data-[state=active]:bg-primary"
@@ -94,7 +95,7 @@
               </Tabs.Trigger>
             {/each}
           </Tabs.List>
-          {#each data.sessionBreakdowns as session}
+          {#each data.sessionBreakdowns as session (session.session_id)}
             <Tabs.Content value={session.session_id}>
               <Table.Root>
                 <Table.Header>
@@ -106,7 +107,7 @@
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {#each session.players as player}
+                  {#each session.players as player (player.player_id)}
                     <Table.Row>
                       <Table.Cell>{player.player_name}</Table.Cell>
                       <Table.Cell class="text-right">{player.score}</Table.Cell>
@@ -177,9 +178,13 @@
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {#each data.gameStats as stat}
+          {#each data.gameStats as stat (stat.game_id)}
             <Table.Row>
-              <Table.Cell>{stat.game_name}</Table.Cell>
+              <Table.Cell>
+                <a href={resolve(`/games/${stat.game_id}`)} class="hover:underline"
+                  >{stat.game_name}</a
+                >
+              </Table.Cell>
               <Table.Cell class="text-right">{stat.times_played}</Table.Cell>
             </Table.Row>
           {:else}
@@ -274,11 +279,11 @@
       <Card.Content>
         <Tabs.Root value={data.scoresByGame[0].game_id} class="gap-6">
           <Tabs.List>
-            {#each data.scoresByGame as game}
+            {#each data.scoresByGame as game (game.game_id)}
               <Tabs.Trigger value={game.game_id}>{game.game_name}</Tabs.Trigger>
             {/each}
           </Tabs.List>
-          {#each data.scoresByGame as game}
+          {#each data.scoresByGame as game (game.game_id)}
             <Tabs.Content value={game.game_id}>
               <ChartContainer config={gameChartConfigFor(game.playerIds)} class="h-64 w-full">
                 <LineChart

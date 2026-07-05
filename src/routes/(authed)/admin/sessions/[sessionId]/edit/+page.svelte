@@ -66,6 +66,8 @@
     return async ({ result, update }) => {
       loading = false
       if (result.type === 'redirect') {
+        // result.location is an already-resolved redirect URL from the server action.
+        // eslint-disable-next-line svelte/no-navigation-without-resolve
         await goto(result.location)
       } else {
         await update()

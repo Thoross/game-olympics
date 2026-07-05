@@ -42,7 +42,7 @@
             {statusLabels[status] ?? 'All'}
           </Select.Trigger>
           <Select.Content>
-            {#each Object.entries(statusLabels) as [value, label]}
+            {#each Object.entries(statusLabels) as [value, label] (value)}
               <Select.Item {value}>{label}</Select.Item>
             {/each}
           </Select.Content>

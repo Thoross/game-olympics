@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import * as Table from '$lib/components/ui/table'
   import Button from '$lib/components/ui/button/button.svelte'
   import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js'
@@ -72,7 +73,7 @@
         {#each table.getRowModel().rows as row (row.id)}
           <Table.Row>
             <Table.Cell>
-              <a href="/games/{row.original.game_id}" class="hover:underline">
+              <a href={resolve(`/games/${row.original.game_id}`)} class="hover:underline">
                 {row.original.game_name}
               </a>
             </Table.Cell>
@@ -81,7 +82,7 @@
                 <a
                   href={row.original.game_bgg_url}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer external"
                   class=" text-sm text-muted-foreground underline hover:text-foreground"
                 >
                   <span class="flex flex-row items-center gap-1"

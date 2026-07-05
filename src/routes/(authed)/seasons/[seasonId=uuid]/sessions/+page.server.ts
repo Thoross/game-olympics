@@ -7,7 +7,7 @@ export const load: ServerLoad = async ({ params, locals }) => {
       `
       session_id,
       session_date_played,
-      games ( game_name ),
+      games ( game_id, game_name ),
       player_sessions (
         player_session_score,
         player_session_position,

@@ -73,7 +73,10 @@
     </div>
 
     <div class="text-right">
-      <a href={resolve('/auth/forgot-password')} class="text-sm font-medium text-primary hover:underline">
+      <a
+        href={resolve('/auth/forgot-password')}
+        class="text-sm font-medium text-primary hover:underline"
+      >
         Forgot password?
       </a>
     </div>
@@ -88,7 +91,9 @@
   {#snippet footer()}
     <p class="text-center text-muted-foreground">
       Don't have an account?
-      <a href={resolve('/auth/register')} class="font-medium text-primary hover:underline">Register</a>
+      <a href={resolve('/auth/register')} class="font-medium text-primary hover:underline"
+        >Register</a
+      >
     </p>
   {/snippet}
 </AuthCard>

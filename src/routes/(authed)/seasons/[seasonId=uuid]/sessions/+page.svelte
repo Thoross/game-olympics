@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths'
   import * as Table from '$lib/components/ui/table'
   import * as Card from '$lib/components/ui/card'
   import Button from '$lib/components/ui/button/button.svelte'
@@ -16,9 +17,8 @@
     })
   }
 
-  function getGameName(session: (typeof data.sessions)[number]) {
-    const g = Array.isArray(session.games) ? session.games[0] : session.games
-    return g?.game_name ?? '—'
+  function getGame(session: (typeof data.sessions)[number]) {
+    return Array.isArray(session.games) ? session.games[0] : session.games
   }
 
   function getPlayers(session: (typeof data.sessions)[number]) {
@@ -55,7 +55,16 @@
             <Table.Cell class="whitespace-nowrap"
               >{formatDate(session.session_date_played)}</Table.Cell
             >
-            <Table.Cell>{getGameName(session)}</Table.Cell>
+            <Table.Cell>
+              {@const game = getGame(session)}
+              {#if game?.game_id}
+                <a href={resolve(`/games/${game.game_id}`)} class="hover:underline"
+                  >{game.game_name}</a
+                >
+              {:else}
+                —
+              {/if}
+            </Table.Cell>
             <Table.Cell>{getPlayers(session)}</Table.Cell>
             {#if isAdmin}
               <Table.Cell class="text-right">

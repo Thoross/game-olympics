@@ -28,7 +28,9 @@
     />
     {#snippet footer()}
       <p class="text-center">
-        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Back to sign in</a>
+        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline"
+          >Back to sign in</a
+        >
       </p>
     {/snippet}
   </AuthCard>
@@ -122,7 +124,9 @@
     {#snippet footer()}
       <p class="text-center text-muted-foreground">
         Already have an account?
-        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline">Sign in</a>
+        <a href={resolve('/auth/signin')} class="font-medium text-primary hover:underline"
+          >Sign in</a
+        >
       </p>
     {/snippet}
   </AuthCard>

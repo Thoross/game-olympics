@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores'
+  import { resolve } from '$app/paths'
   import Button from '$lib/components/ui/button/button.svelte'
   import SeasonStatusBadge from '$lib/components/SeasonStatusBadge.svelte'
 
@@ -37,10 +38,10 @@
 
 <div class="mb-6">
   <nav class="flex gap-1 border-b">
-    {#each tabs as tab}
+    {#each tabs as tab (tab.href)}
       {@const isActive = activeTab === tab.href}
       <a
-        href={tab.href}
+        href={resolve(`/seasons/${$page.params.seasonId}/${tab.href}`)}
         class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors
           {isActive
           ? 'border-foreground text-foreground'

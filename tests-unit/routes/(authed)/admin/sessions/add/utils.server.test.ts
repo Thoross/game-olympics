@@ -85,8 +85,6 @@ describe('rankPlayers', () => {
       { player_id: 'p-alice', score: 10 },
       { player_id: 'p-bob', score: 8 },
     ])
-    expect(result.map((r) => r.player_id)).toEqual(
-      expect.arrayContaining(['p-alice', 'p-bob']),
-    )
+    expect(result.map((r) => r.player_id)).toEqual(expect.arrayContaining(['p-alice', 'p-bob']))
   })
 })

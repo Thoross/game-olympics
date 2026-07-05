@@ -30,12 +30,14 @@
     <Label for="gameName">Game Name</Label>
     <Input id="gameName" name="gameName" type="text" placeholder="Catan" required />
     {#if form?.errors?.gameName}
-      <p class="text-destructive text-sm">{form.errors.gameName}</p>
+      <p class="text-sm text-destructive">{form.errors.gameName}</p>
     {/if}
   </div>
 
   <div class="flex flex-col gap-1.5">
-    <Label for="gameBggUrl">BoardGameGeek URL <span class="text-muted-foreground">(optional)</span></Label>
+    <Label for="gameBggUrl"
+      >BoardGameGeek URL <span class="text-muted-foreground">(optional)</span></Label
+    >
     <Input
       id="gameBggUrl"
       name="gameBggUrl"
@@ -43,12 +45,12 @@
       placeholder="https://boardgamegeek.com/boardgame/..."
     />
     {#if form?.errors?.gameBggUrl}
-      <p class="text-destructive text-sm">{form.errors.gameBggUrl}</p>
+      <p class="text-sm text-destructive">{form.errors.gameBggUrl}</p>
     {/if}
   </div>
 
   {#if form?.message}
-    <p class="text-destructive text-sm">{form.message}</p>
+    <p class="text-sm text-destructive">{form.message}</p>
   {/if}
 
   <div class="flex gap-2">

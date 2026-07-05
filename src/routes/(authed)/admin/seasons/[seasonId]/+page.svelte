@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
+  import { resolve } from '$app/paths'
   import * as Select from '$lib/components/ui/select'
   import Input from '$lib/components/ui/input/input.svelte'
   import Label from '$lib/components/ui/label/label.svelte'
@@ -53,7 +54,7 @@
 </svelte:head>
 
 <div class="mb-2">
-  <a href="/admin/seasons" class="text-sm text-muted-foreground hover:text-foreground">
+  <a href={resolve('/admin/seasons')} class="text-sm text-muted-foreground hover:text-foreground">
     ← Season Management
   </a>
 </div>
@@ -125,7 +126,7 @@
     {formatSchedule(data.schedule?.multipliers ?? null)}
   </p>
   <a
-    href="/admin/scoring?season={data.season.season_id}"
+    href={resolve(`/admin/scoring?season=${data.season.season_id}`)}
     class="text-sm underline underline-offset-4 hover:opacity-80"
   >
     Manage scoring schedule →

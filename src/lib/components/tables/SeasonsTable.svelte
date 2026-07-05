@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ColumnDef } from '@tanstack/table-core'
+  import { resolve } from '$app/paths'
   import { type Database } from '$lib/database.types'
   import Table from '../Table.svelte'
   import { renderSnippet } from '../ui/data-table'
@@ -53,5 +54,5 @@
   name: Season['season_name']
   season_id: Season['season_id']
 })}
-  <span><a href="/seasons/{season_id}">{name}</a></span>
+  <span><a href={resolve(`/seasons/${season_id}`)}>{name}</a></span>
 {/snippet}

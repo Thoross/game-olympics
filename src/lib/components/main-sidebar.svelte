@@ -5,6 +5,7 @@
   import ThemeToggle from './ThemeToggle.svelte'
   import { page } from '$app/state'
   import { goto, invalidateAll } from '$app/navigation'
+  import { resolve } from '$app/paths'
   import LogOut from '@lucide/svelte/icons/log-out'
 
   let { ref = $bindable(null), ...restProps }: ComponentProps<typeof Sidebar.Root> = $props()
@@ -16,7 +17,7 @@
   async function handleSignOut() {
     await page.data.supabase.auth.signOut()
     await invalidateAll()
-    goto('/auth/signin')
+    goto(resolve('/auth/signin'))
   }
 
   let isAdmin = $derived(user?.player_role === 'ADMIN')
@@ -30,7 +31,7 @@
       title: 'Games',
       url: '/games',
     },
-  ]
+  ] as const
 
   let adminItems = [
     {
@@ -53,10 +54,10 @@
       title: 'Player Management',
       url: '/admin/players',
     },
-  ]
+  ] as const
 </script>
 
-<Sidebar.Root>
+<Sidebar.Root bind:ref {...restProps}>
   <Sidebar.Header class="flex flex-row items-center justify-between">
     <h1 class="inline w-fit">Game Olympics</h1>
     <div class="inline w-fit">
@@ -72,7 +73,7 @@
               isActive={page.url.pathname.split('/')[1] === item.url.substring(1)}
             >
               {#snippet child({ props })}
-                <a href={item.url} {...props}>{item.title}</a>
+                <a href={resolve(item.url)} {...props}>{item.title}</a>
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
@@ -88,7 +89,7 @@
             <Sidebar.MenuItem>
               <Sidebar.MenuButton isActive={page.url.pathname === item.url}>
                 {#snippet child({ props })}
-                  <a href={item.url} {...props}>{item.title}</a>
+                  <a href={resolve(item.url)} {...props}>{item.title}</a>
                 {/snippet}
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>

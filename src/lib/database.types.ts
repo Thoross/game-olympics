@@ -11,21 +11,39 @@ export type Database = {
       games: {
         Row: {
           created_at: string
+          game_bgg_id: number | null
+          game_bgg_rating: number | null
+          game_bgg_synced_at: string | null
           game_bgg_url: string | null
+          game_description: string | null
           game_id: string
+          game_image_url: string | null
           game_name: string
+          game_year_published: number | null
         }
         Insert: {
           created_at?: string
+          game_bgg_id?: number | null
+          game_bgg_rating?: number | null
+          game_bgg_synced_at?: string | null
           game_bgg_url?: string | null
+          game_description?: string | null
           game_id?: string
+          game_image_url?: string | null
           game_name: string
+          game_year_published?: number | null
         }
         Update: {
           created_at?: string
+          game_bgg_id?: number | null
+          game_bgg_rating?: number | null
+          game_bgg_synced_at?: string | null
           game_bgg_url?: string | null
+          game_description?: string | null
           game_id?: string
+          game_image_url?: string | null
           game_name?: string
+          game_year_published?: number | null
         }
         Relationships: []
       }

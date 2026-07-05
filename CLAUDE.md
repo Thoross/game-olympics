@@ -52,11 +52,13 @@ Supabase project ID: `ouzhwuxmfjrfktlwnwjo`. Tables: `seasons`, `games`, `sessio
 All routes under `(authed)/` require authentication (enforced by `hasAuthSession` hook).
 
 **Season detail** (`/seasons/[seasonId]`) has three tabs:
+
 - `standings` — per-player standings points and averages
 - `stats` — game play counts, per-session score tables, line charts (standings over time, score per game)
 - `sessions` — chronological list of recorded game sessions
 
 **Admin routes** (require `player_role = 'ADMIN'`):
+
 - `/admin/seasons` — list and manage seasons
 - `/admin/seasons/[seasonId]` — edit season details; add/remove players via three form actions (`updateDetails`, `addPlayer`, `removePlayer`)
 - `/admin/sessions/add` — record a game session (select season + game, add players with scores; positions are auto-ranked by score descending with tie handling)
@@ -97,14 +99,19 @@ Game Olympics is a board game tracking app for a group of players competing acro
 ## Technology Stack
 
 ## Languages
+
 - TypeScript ^5.9.3 - All application code (`.ts`, `.svelte`)
 - Svelte 5 ^5.54.0 - Component templates with runes syntax
 - JavaScript - Configuration files (`svelte.config.js`, `eslint.config.js`)
+
 ## Runtime
+
 - Node.js v22.15.0
 - npm 11.4.2
 - Lockfile: `package-lock.json` present
+
 ## Frameworks
+
 - SvelteKit ^2.55.0 - Full-stack web framework (`@sveltejs/kit`)
 - Svelte ^5.54.0 - Component framework with runes (`$props()`, `$derived()`, `$state()`)
 - Vite ^8.0.1 - Dev server and build tool
@@ -129,7 +136,9 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - Prettier ^3.8.1 - Code formatting
 - prettier-plugin-svelte ^3.4.1 - Svelte formatting
 - prettier-plugin-tailwindcss ^0.7.2 - Tailwind class sorting
+
 ## Key Dependencies
+
 - `@supabase/supabase-js` ^2.33.0 - Supabase client for database and auth
 - `@supabase/ssr` ^0.8.0 - Supabase SSR integration for server-side auth cookie handling
 - `zod` ^4.3.6 - Schema validation (schemas in `src/lib/schemas/`)
@@ -140,7 +149,9 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - `@fontsource-variable/public-sans` ^5.2.7 - Self-hosted Public Sans variable font
 - `clsx` ^2.1.1 - Conditional class string construction
 - `layerchart` ^2.0.0-next.43 - Chart components built on D3/LayerCake
+
 ## Configuration
+
 - Config: `tsconfig.json` extends `.svelte-kit/tsconfig.json`
 - Strict mode enabled
 - Module resolution: `bundler`
@@ -160,8 +171,11 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - Public env vars accessed via `$env/static/public`: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - ESLint config: `eslint.config.js`
 - Prettier config: `.prettierrc`
+
 ## Build Commands
+
 ## Platform Requirements
+
 - Node.js v22+
 - npm 11+
 - Supabase project access (project ID: `ouzhwuxmfjrfktlwnwjo`)
@@ -171,34 +185,47 @@ Game Olympics is a board game tracking app for a group of players competing acro
 ## Conventions
 
 ## Code Style & Formatting
+
 - **Prettier**: No tabs, single quotes, trailing commas, no semicolons, 100 char print width
 - **ESLint**: `eslint-config-prettier` + `eslint-plugin-svelte` + `typescript-eslint`
+
 ## Svelte 5 Patterns
+
 - **Runes throughout**: `$props()`, `$derived()`, `$state()` — no legacy `export let` or stores
 - Components use Svelte 5 syntax exclusively
 - Client-side reactivity via `$state()` and `$derived()`
+
 ## TypeScript
+
 - Strict typing with Supabase `Database` type for all DB interactions
 - `App.Locals` in `src/app.d.ts` defines server-side context types
 - Zod v4 schemas for form validation in `src/lib/schemas/`
 - Error utility: `getZodErrors()` in `src/lib/utils/getZodErrors.ts`
+
 ## Component Patterns
+
 - **UI primitives**: shadcn-svelte (bits-ui) in `src/lib/components/ui/` — not modified directly
 - **App components**: `src/lib/components/` — custom components for app-specific UI
 - **Table components**: Dedicated table components in `src/lib/components/tables/`
 - **Charts**: LayerChart (`LineChart`) wrapped in `ChartContainer` from `$lib/components/ui/chart`
+
 ## Server-Side Patterns
+
 - Server hooks pipeline: supabase → hasAuthSession → augmentUser
 - Data loading in `+page.server.ts` / `+layout.server.ts`
 - Form actions for mutations (named actions: `updateDetails`, `addPlayer`, etc.)
 - Pure business logic extracted to co-located `utils.server.ts` files
 - Authorization via `requireAdmin()` / `isAdmin()` from `$lib/server/authorization`
+
 ## Import Conventions
+
 - `$lib/` alias for `src/lib/`
 - Supabase types imported from `$lib/database.types`
 - UI components imported from `$lib/components/ui/<component>`
 - Server utilities from `$lib/server/`
+
 ## CSS
+
 - Tailwind CSS v4 with `@tailwindcss/vite` plugin
 - Global styles in `src/routes/layout.css`
 - Tailwind class ordering managed by prettier-plugin-tailwindcss
@@ -206,33 +233,51 @@ Game Olympics is a board game tracking app for a group of players competing acro
 ## Architecture
 
 ## Overview
+
 ## Server Hooks Pipeline
+
 ## Layers
+
 ### Data Access
+
 - All database access through Supabase client (typed with `Database` from `$lib/database.types`)
 - Server-side client created in hooks, available on `event.locals.supabase`
 - Client-side Supabase client at `src/lib/supabase/client.ts` (public key only)
+
 ### Server Load Functions
+
 - `+layout.server.ts` files load shared data (session, user)
 - `+page.server.ts` files load page-specific data
 - Form actions handle mutations (e.g., admin season management has `updateDetails`, `addPlayer`, `removePlayer`)
+
 ### Business Logic
+
 - Pure functions extracted to `utils.server.ts` files co-located with routes
 - Key examples: `src/routes/(authed)/seasons/[seasonId=uuid]/stats/utils.server.ts` (scoring, standings, aggregations)
 - `src/routes/(authed)/admin/sessions/add/utils.server.ts` (session creation utilities)
+
 ### Authorization
+
 - `src/lib/server/authorization.ts` exports `requireAdmin()` and `isAdmin()`
 - Auth hook redirects unauthenticated users
 - Admin routes should call `requireAdmin()` in their load/action functions
+
 ### UI Components
+
 - shadcn-svelte components in `src/lib/components/ui/` (card, tabs, sidebar, input, alert, etc.)
 - Custom app components in `src/lib/components/` (Alert, Breadcrumbs, Table, SeasonsTable, GamesTable, etc.)
 - Charts via LayerChart wrapped in `ChartContainer` from `$lib/components/ui/chart`
+
 ## Data Flow
+
 ```
+
 ```
+
 ## Key Types
+
 - `App.Locals` (`src/app.d.ts`): `supabase`, `safeGetSession`, `session`, `user` (Supabase `User` + player fields)
 - `Database` (`src/lib/database.types.ts`): Generated Supabase types for all tables
 - Zod schemas in `src/lib/schemas/` for form validation (signin, registration, game add, etc.)
+
 ## Scoring System

@@ -1,6 +1,7 @@
 import { fail, error } from '@sveltejs/kit'
 import type { Actions, ServerLoad } from '@sveltejs/kit'
 import { requireAdmin } from '$lib/server/authorization'
+import { removeSeasonImageByUrl, uploadSeasonImage } from '$lib/server/seasonImages'
 
 export const load: ServerLoad = async ({ params, locals }) => {
   requireAdmin(locals.user)
@@ -16,7 +17,9 @@ export const load: ServerLoad = async ({ params, locals }) => {
   ] = await Promise.all([
     locals.supabase
       .from('seasons')
-      .select('season_id, season_name, season_description, season_status')
+      .select(
+        'season_id, season_name, season_description, season_status, season_logo_url, season_banner_url',
+      )
       .eq('season_id', seasonId)
       .single(),
     locals.supabase
@@ -95,13 +98,59 @@ export const actions: Actions = {
       return fail(400, { updateError: 'Season name is required.' })
     }
 
+    const logo = formData.get('logo') as File | null
+    const banner = formData.get('banner') as File | null
+    const removeLogo = formData.get('remove_logo') === 'on'
+    const removeBanner = formData.get('remove_banner') === 'on'
+
+    // Load current URLs so replaced/removed objects can be best-effort deleted.
+    const { data: current } = await locals.supabase
+      .from('seasons')
+      .select('season_logo_url, season_banner_url')
+      .eq('season_id', seasonId)
+      .single()
+
+    const update: {
+      season_name: string
+      season_description: string | null
+      season_status: typeof season_status
+      season_logo_url?: string | null
+      season_banner_url?: string | null
+    } = { season_name, season_description, season_status }
+
+    const cleanup: (string | null | undefined)[] = []
+
+    if (logo && logo.size > 0) {
+      const result = await uploadSeasonImage(locals.supabase, seasonId, 'logo', logo)
+      if ('error' in result) return fail(400, { updateError: result.error })
+      update.season_logo_url = result.url
+      cleanup.push(current?.season_logo_url)
+    } else if (removeLogo) {
+      update.season_logo_url = null
+      cleanup.push(current?.season_logo_url)
+    }
+
+    if (banner && banner.size > 0) {
+      const result = await uploadSeasonImage(locals.supabase, seasonId, 'banner', banner)
+      if ('error' in result) return fail(400, { updateError: result.error })
+      update.season_banner_url = result.url
+      cleanup.push(current?.season_banner_url)
+    } else if (removeBanner) {
+      update.season_banner_url = null
+      cleanup.push(current?.season_banner_url)
+    }
+
     const { error: updateError } = await locals.supabase
       .from('seasons')
-      .update({ season_name, season_description, season_status })
+      .update(update)
       .eq('season_id', seasonId)
 
     if (updateError) {
       return fail(500, { updateError: 'Failed to update season.' })
+    }
+
+    for (const url of cleanup) {
+      await removeSeasonImageByUrl(locals.supabase, url)
     }
 
     return { updateSuccess: true }

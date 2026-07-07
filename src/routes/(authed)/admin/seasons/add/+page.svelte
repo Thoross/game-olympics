@@ -36,6 +36,7 @@
 
 <form
   method="POST"
+  enctype="multipart/form-data"
   class="mt-6 flex max-w-sm flex-col gap-4"
   use:enhance={({ formData }) => {
     formData.set('seasonStatus', seasonStatus)
@@ -77,6 +78,20 @@
     {#if form?.errors?.seasonStatus}
       <p class="text-sm text-destructive">{form.errors.seasonStatus}</p>
     {/if}
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <Label for="logo">
+      Logo <span class="text-muted-foreground">(optional)</span>
+    </Label>
+    <Input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" />
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <Label for="banner">
+      Banner <span class="text-muted-foreground">(optional)</span>
+    </Label>
+    <Input id="banner" name="banner" type="file" accept="image/png,image/jpeg,image/webp" />
   </div>
 
   {#if form?.message}

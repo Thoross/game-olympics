@@ -21,8 +21,23 @@
   <title>{data?.seasonData?.season_name ?? 'Season'} - Game Olympics</title>
 </svelte:head>
 
+{#if data?.seasonData?.season_banner_url}
+  <img
+    src={data.seasonData.season_banner_url}
+    alt="{data.seasonData.season_name} banner"
+    class="mb-4 max-h-[300px] w-full rounded-lg border object-cover"
+  />
+{/if}
+
 <div class="flex items-center justify-between">
   <div class="flex items-center gap-3">
+    {#if data?.seasonData?.season_logo_url}
+      <img
+        src={data.seasonData.season_logo_url}
+        alt="{data.seasonData.season_name} logo"
+        class="h-10 w-10 rounded-md border object-cover sm:h-24 sm:w-24"
+      />
+    {/if}
     <h1>{data?.seasonData?.season_name}</h1>
     {#if data?.seasonData?.season_status}
       <SeasonStatusBadge seasonStatus={data.seasonData.season_status} />

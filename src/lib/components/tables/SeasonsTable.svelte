@@ -13,6 +13,7 @@
     season_name: string
     season_description: string | null
     season_status: Database['public']['Enums']['Season Status'] | undefined
+    season_logo_url: string | null
     created_at: string
   }
 
@@ -24,6 +25,7 @@
         return renderSnippet(SeasonNameCell, {
           name: row.original.season_name,
           season_id: row.original.season_id,
+          season_logo_url: row.original.season_logo_url,
         })
       },
     },
@@ -50,9 +52,16 @@
 {#snippet SeasonNameCell({
   name,
   season_id,
+  season_logo_url,
 }: {
   name: Season['season_name']
   season_id: Season['season_id']
+  season_logo_url: Season['season_logo_url']
 })}
-  <span><a href={resolve(`/seasons/${season_id}`)}>{name}</a></span>
+  <span class="flex items-center gap-2">
+    {#if season_logo_url}
+      <img src={season_logo_url} alt="{name} logo" class="h-6 w-6 rounded border object-cover" />
+    {/if}
+    <a href={resolve(`/seasons/${season_id}`)}>{name}</a>
+  </span>
 {/snippet}

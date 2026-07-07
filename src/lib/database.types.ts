@@ -236,22 +236,28 @@ export type Database = {
       seasons: {
         Row: {
           created_at: string
+          season_banner_url: string | null
           season_description: string | null
           season_id: string
+          season_logo_url: string | null
           season_name: string
           season_status: Database['public']['Enums']['Season Status']
         }
         Insert: {
           created_at?: string
+          season_banner_url?: string | null
           season_description?: string | null
           season_id?: string
+          season_logo_url?: string | null
           season_name: string
           season_status?: Database['public']['Enums']['Season Status']
         }
         Update: {
           created_at?: string
+          season_banner_url?: string | null
           season_description?: string | null
           season_id?: string
+          season_logo_url?: string | null
           season_name?: string
           season_status?: Database['public']['Enums']['Season Status']
         }

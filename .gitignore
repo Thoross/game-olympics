@@ -44,3 +44,5 @@ npm-debug.log*
 
 .planning/*
 supabase/.temp
+
+.claude/settings.local.json

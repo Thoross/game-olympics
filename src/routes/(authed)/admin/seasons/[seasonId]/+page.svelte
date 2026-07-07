@@ -66,6 +66,7 @@
   <form
     method="POST"
     action="?/updateDetails"
+    enctype="multipart/form-data"
     class="flex flex-col gap-4"
     use:enhance={({ formData }) => {
       formData.set('season_status', seasonStatus)
@@ -100,6 +101,38 @@
           {/each}
         </Select.Content>
       </Select.Root>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <Label for="logo">Logo</Label>
+      {#if data.season.season_logo_url}
+        <img
+          src={data.season.season_logo_url}
+          alt="{data.season.season_name} logo"
+          class="h-16 w-16 rounded-md border object-cover"
+        />
+        <label class="flex items-center gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" name="remove_logo" />
+          Remove logo
+        </label>
+      {/if}
+      <Input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <Label for="banner">Banner</Label>
+      {#if data.season.season_banner_url}
+        <img
+          src={data.season.season_banner_url}
+          alt="{data.season.season_name} banner"
+          class="max-h-32 w-full rounded-md border object-cover"
+        />
+        <label class="flex items-center gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" name="remove_banner" />
+          Remove banner
+        </label>
+      {/if}
+      <Input id="banner" name="banner" type="file" accept="image/png,image/jpeg,image/webp" />
     </div>
 
     {#if form?.updateError}

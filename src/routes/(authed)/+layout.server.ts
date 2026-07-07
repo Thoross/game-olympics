@@ -1,7 +1,11 @@
 import type { LayoutServerLoad } from './$types'
 
 export const load: LayoutServerLoad = async ({ locals: { session, user, supabase }, cookies }) => {
-  let inProgressSeasons: { season_id: string; season_name: string }[] = []
+  let inProgressSeasons: {
+    season_id: string
+    season_name: string
+    season_logo_url: string | null
+  }[] = []
 
   if (user?.player_id) {
     const { data: memberships } = await supabase
@@ -13,7 +17,7 @@ export const load: LayoutServerLoad = async ({ locals: { session, user, supabase
     if (seasonIds.length > 0) {
       const { data } = await supabase
         .from('seasons')
-        .select('season_id, season_name')
+        .select('season_id, season_name, season_logo_url')
         .in('season_id', seasonIds)
         .eq('season_status', 'IN_PROGRESS')
         .order('season_name', { ascending: true })

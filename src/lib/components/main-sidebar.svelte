@@ -23,6 +23,14 @@
   let isAdmin = $derived(user?.player_role === 'ADMIN')
   let inProgressSeasons = $derived(page.data.inProgressSeasons ?? [])
 
+  // True when viewing one of the in-progress seasons (which has its own active
+  // sub-link) — used to avoid also highlighting the top-level "Seasons" item.
+  let inInProgressSeason = $derived(
+    inProgressSeasons.some((s: { season_id: string }) =>
+      page.url.pathname.startsWith(`/seasons/${s.season_id}`),
+    ),
+  )
+
   const sidebar = Sidebar.useSidebar()
 
   function closeMobileNav() {
@@ -77,14 +85,15 @@
         {#each items as item (item.title)}
           <Sidebar.MenuItem>
             <Sidebar.MenuButton
-              isActive={page.url.pathname.split('/')[1] === item.url.substring(1)}
+              isActive={page.url.pathname.split('/')[1] === item.url.substring(1) &&
+                !(item.title === 'Seasons' && inInProgressSeason)}
             >
               {#snippet child({ props })}
                 <a href={resolve(item.url)} {...props} onclick={closeMobileNav}>{item.title}</a>
               {/snippet}
             </Sidebar.MenuButton>
             {#if item.title === 'Seasons' && inProgressSeasons.length > 0}
-              <Sidebar.MenuSub>
+              <Sidebar.MenuSub class="pt-1">
                 {#each inProgressSeasons as season (season.season_id)}
                   <Sidebar.MenuSubItem>
                     <Sidebar.MenuSubButton
@@ -94,8 +103,17 @@
                         <a
                           href={resolve(`/seasons/${season.season_id}`)}
                           {...props}
-                          onclick={closeMobileNav}>{season.season_name}</a
+                          onclick={closeMobileNav}
                         >
+                          {#if season.season_logo_url}
+                            <img
+                              src={season.season_logo_url}
+                              alt=""
+                              class="size-4 shrink-0 rounded-[3px] object-cover"
+                            />
+                          {/if}
+                          <span>{season.season_name}</span>
+                        </a>
                       {/snippet}
                     </Sidebar.MenuSubButton>
                   </Sidebar.MenuSubItem>

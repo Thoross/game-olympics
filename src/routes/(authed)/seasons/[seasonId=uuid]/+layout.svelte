@@ -29,7 +29,7 @@
   />
 {/if}
 
-<div class="flex items-center justify-between">
+<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
   <div class="flex items-center gap-3">
     {#if data?.seasonData?.season_logo_url}
       <img
@@ -44,7 +44,12 @@
     {/if}
   </div>
   {#if isAdmin && data.seasonData}
-    <Button href={`/admin/sessions/add?season=${data.seasonData.season_id}`}>Add Session</Button>
+    <Button
+      href={`/admin/sessions/add?season=${data.seasonData.season_id}`}
+      class="w-full md:w-auto"
+    >
+      Add Session
+    </Button>
   {/if}
 </div>
 {#if data?.seasonData?.season_description}

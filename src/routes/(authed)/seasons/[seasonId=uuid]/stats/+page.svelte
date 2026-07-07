@@ -6,8 +6,35 @@
   import * as Tabs from '$lib/components/ui/tabs'
   import * as Card from '$lib/components/ui/card'
   import { ChartContainer, type ChartConfig } from '$lib/components/ui/chart'
+  import MobileTabSelect from '$lib/components/MobileTabSelect.svelte'
+  import ChartLegend from '$lib/components/ChartLegend.svelte'
 
   let { data } = $props()
+
+  // Active tab per group — driven by the desktop Tabs.List and the mobile dropdown.
+  let activeSession = $state(data.sessionBreakdowns[0]?.session_id ?? '')
+  let activeAverages = $state('season')
+  let activeScores = $state(data.scoresByGame[0]?.game_id ?? '')
+
+  const sessionItems = $derived(
+    data.sessionBreakdowns.map((s: { session_id: string; game_name: string }, i: number) => ({
+      value: s.session_id,
+      label: `${s.game_name} ${i + 1}`,
+    })),
+  )
+  const averagesItems = $derived([
+    { value: 'season', label: 'Season' },
+    ...data.gameAverages.map((g: { game_id: string; game_name: string }) => ({
+      value: g.game_id,
+      label: g.game_name,
+    })),
+  ])
+  const scoresItems = $derived(
+    data.scoresByGame.map((g: { game_id: string; game_name: string }) => ({
+      value: g.game_id,
+      label: g.game_name,
+    })),
+  )
 
   const CHART_COLORS = [
     'var(--chart-1)',
@@ -16,6 +43,9 @@
     'var(--chart-4)',
     'var(--chart-5)',
   ]
+
+  // Shorten crowded x-axis ticks ("Session #1" → "#1"); tooltips keep the full label.
+  const shortSessionLabel = (v: string | number) => String(v).replace('Session ', '')
 
   function ordinal(n: number): string {
     const s = ['th', 'st', 'nd', 'rd']
@@ -83,8 +113,9 @@
           No sessions yet.
         </div>
       {:else}
-        <Tabs.Root value={data.sessionBreakdowns[0].session_id} class="gap-6">
-          <Tabs.List>
+        <Tabs.Root bind:value={activeSession} class="gap-6">
+          <MobileTabSelect bind:value={activeSession} items={sessionItems} />
+          <Tabs.List class="hidden sm:inline-flex">
             {#each data.sessionBreakdowns as session, i (session.session_id)}
               <Tabs.Trigger
                 value={session.session_id}
@@ -131,11 +162,12 @@
         <Card.Title>Points Over Time</Card.Title>
       </Card.Header>
       <Card.Content>
-        <ChartContainer config={chartConfig} class="h-64 w-full">
+        <ChartContainer config={chartConfig} class="h-64 w-full [&_.lc-legend-container]:hidden">
           <LineChart
             data={data.standingsOverTime}
             x={(d) => d.label}
             series={playerSeries}
+            props={{ xAxis: { format: shortSessionLabel } }}
             legend
             points
           >
@@ -160,6 +192,7 @@
             {/snippet}
           </LineChart>
         </ChartContainer>
+        <ChartLegend items={playerSeries.map((s) => ({ label: s.label, color: s.color }))} />
       </Card.Content>
     </Card.Root>
   {/if}
@@ -210,8 +243,9 @@
           No sessions yet.
         </div>
       {:else}
-        <Tabs.Root value="season" class="gap-6">
-          <Tabs.List>
+        <Tabs.Root bind:value={activeAverages} class="gap-6">
+          <MobileTabSelect bind:value={activeAverages} items={averagesItems} />
+          <Tabs.List class="hidden sm:inline-flex">
             <Tabs.Trigger value="season">Season</Tabs.Trigger>
             {#each data.gameAverages as game (game.game_id)}
               <Tabs.Trigger value={game.game_id}>{game.game_name}</Tabs.Trigger>
@@ -277,19 +311,24 @@
         <Card.Title>Score per Game</Card.Title>
       </Card.Header>
       <Card.Content>
-        <Tabs.Root value={data.scoresByGame[0].game_id} class="gap-6">
-          <Tabs.List>
+        <Tabs.Root bind:value={activeScores} class="gap-6">
+          <MobileTabSelect bind:value={activeScores} items={scoresItems} />
+          <Tabs.List class="hidden sm:inline-flex">
             {#each data.scoresByGame as game (game.game_id)}
               <Tabs.Trigger value={game.game_id}>{game.game_name}</Tabs.Trigger>
             {/each}
           </Tabs.List>
           {#each data.scoresByGame as game (game.game_id)}
             <Tabs.Content value={game.game_id}>
-              <ChartContainer config={gameChartConfigFor(game.playerIds)} class="h-64 w-full">
+              <ChartContainer
+                config={gameChartConfigFor(game.playerIds)}
+                class="h-64 w-full [&_.lc-legend-container]:hidden"
+              >
                 <LineChart
                   data={game.sessions}
                   x={(d) => d.label}
                   series={gameSeriesFor(game.playerIds)}
+                  props={{ xAxis: { format: shortSessionLabel } }}
                   legend
                   points
                 >
@@ -314,6 +353,12 @@
                   {/snippet}
                 </LineChart>
               </ChartContainer>
+              <ChartLegend
+                items={gameSeriesFor(game.playerIds).map((s) => ({
+                  label: s.label,
+                  color: s.color,
+                }))}
+              />
             </Tabs.Content>
           {/each}
         </Tabs.Root>

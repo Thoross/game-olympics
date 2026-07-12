@@ -1,9 +1,13 @@
+import { BGG_API_TOKEN } from '$env/static/private'
+
 /**
  * BoardGameGeek (BGG) XML API v2 integration.
  *
- * `extractBggId` and `parseBggThing` are pure and unit-tested. `fetchBggGame`
- * performs the network call and never throws — on any failure it returns null so
- * callers (add-game, refresh) can degrade gracefully and leave metadata unset.
+ * `extractBggId`, `parseBggThing`, and `bggAuthHeaders` are pure and
+ * unit-tested. `fetchBggGame` performs the network call and never throws — on
+ * any failure it returns null so callers (add-game, refresh) can degrade
+ * gracefully and leave metadata unset. It attaches an `Authorization: Bearer`
+ * header from `BGG_API_TOKEN` when that env var is set.
  */
 
 export type BggGameData = {
@@ -88,12 +92,24 @@ export function parseBggThing(xml: string): Omit<BggGameData, 'bggId'> | null {
 }
 
 /**
+ * Build the auth headers for a BGG request. Returns a Bearer Authorization
+ * header when a token is provided; an empty object otherwise so callers can
+ * spread it unconditionally and fall back to an unauthenticated request.
+ */
+export function bggAuthHeaders(token: string | undefined | null): Record<string, string> {
+  const trimmed = token?.trim()
+  return trimmed ? { Authorization: `Bearer ${trimmed}` } : {}
+}
+
+/**
  * Fetch a game's metadata from the BGG XML API. Never throws — returns null on
  * network error, non-OK response, or unparseable body.
  */
 export async function fetchBggGame(bggId: number): Promise<BggGameData | null> {
   try {
-    const res = await fetch(`${BGG_THING_URL}?id=${bggId}&stats=1`)
+    const res = await fetch(`${BGG_THING_URL}?id=${bggId}&stats=1`, {
+      headers: bggAuthHeaders(BGG_API_TOKEN),
+    })
     if (!res.ok) return null
     const xml = await res.text()
     const parsed = parseBggThing(xml)

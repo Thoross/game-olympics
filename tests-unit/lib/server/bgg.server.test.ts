@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest'
-import { extractBggId, parseBggThing } from '$lib/server/bgg.server'
+import { bggAuthHeaders, extractBggId, parseBggThing } from '$lib/server/bgg.server'
+
+describe('bggAuthHeaders', () => {
+  it('returns a Bearer Authorization header when a token is present', () => {
+    expect(bggAuthHeaders('abc123')).toEqual({ Authorization: 'Bearer abc123' })
+  })
+
+  it('returns no header when the token is undefined, empty, or whitespace', () => {
+    expect(bggAuthHeaders(undefined)).toEqual({})
+    expect(bggAuthHeaders('')).toEqual({})
+    expect(bggAuthHeaders('   ')).toEqual({})
+  })
+})
 
 describe('extractBggId', () => {
   it('extracts the id from a standard boardgame URL', () => {

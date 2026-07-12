@@ -78,7 +78,7 @@
   </div>
 
   {#if data.game.game_description}
-    <p class="max-w-prose text-sm whitespace-pre-line">{data.game.game_description}</p>
+    <p class="text-sm whitespace-pre-line">{data.game.game_description}</p>
   {/if}
 
   <section class="flex flex-col gap-3">

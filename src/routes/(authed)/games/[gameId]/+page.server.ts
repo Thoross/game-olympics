@@ -85,11 +85,15 @@ export const actions: Actions = {
 
     const bggId = game?.game_bgg_id ?? extractBggId(game?.game_bgg_url)
     if (!bggId) {
+      console.warn('refreshBgg: no BGG id for game', gameId)
       return fail(400, { message: 'This game has no BoardGameGeek URL to refresh from.' })
     }
 
+    console.info('refreshBgg: fetching BGG data', { gameId, bggId })
+
     const bgg = await fetchBggGame(bggId)
     if (!bgg) {
+      console.error('refreshBgg: BGG fetch failed', { gameId, bggId })
       return fail(502, { message: 'Could not fetch data from BoardGameGeek. Please try again.' })
     }
 
@@ -106,9 +110,11 @@ export const actions: Actions = {
       .eq('game_id', gameId)
 
     if (updateError) {
+      console.error('refreshBgg: update failed', updateError)
       return fail(500, { message: updateError.message })
     }
 
+    console.info('refreshBgg: synced game', { gameId, bggId })
     return { success: true }
   },
 }

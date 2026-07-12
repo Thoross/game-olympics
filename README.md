@@ -37,12 +37,18 @@ npm run dev            # or: npm run dev -- --open
 
 Create a `.env` from `.env.example` with:
 
-| Variable                          | Description                     |
-| --------------------------------- | ------------------------------- |
-| `PUBLIC_SUPABASE_URL`             | Your Supabase project URL       |
-| `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (anon) key |
+| Variable                          | Description                                       |
+| --------------------------------- | ------------------------------------------------- |
+| `PUBLIC_SUPABASE_URL`             | Your Supabase project URL                         |
+| `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (anon) key                   |
+| `BGG_API_TOKEN`                   | Bearer token for BoardGameGeek XML API (optional) |
 
-Both are exposed to the client via `$env/static/public`.
+The `PUBLIC_*` variables are exposed to the client via `$env/static/public`.
+
+`BGG_API_TOKEN` is a server-only secret read at runtime via `$env/dynamic/private`.
+When set, it is sent as an `Authorization: Bearer` header on BoardGameGeek XML API
+requests; when unset, requests are made unauthenticated (game metadata enrichment
+degrades gracefully). Set it in your host's dashboard for production deploys.
 
 ## Database
 

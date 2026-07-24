@@ -46,3 +46,5 @@ npm-debug.log*
 supabase/.temp
 
 .claude/settings.local.json
+
+coverage/

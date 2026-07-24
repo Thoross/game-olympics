@@ -10,9 +10,11 @@ npm run build            # Production build
 npm run check            # Svelte type checking
 npm run lint             # Prettier + ESLint check
 npm run format           # Auto-format with Prettier
-npm run test             # Run all tests once
-npm run test:unit        # Run tests in watch mode
-npm run test:unit -- --run --project=server --reporter=verbose src/path/to/file.test.ts  # Single test file
+npm run test            # Run server unit tests once (fast, browser-free)
+npm run test:server     # Server project only
+npm run test:client     # Component tests in headless chromium (needs: npx playwright install chromium)
+npm run test:coverage   # Server tests with enforced coverage thresholds
+npm run test:unit       # Watch mode
 npm run generate:types   # Regenerate Supabase types from remote schema
 ```
 
@@ -24,7 +26,7 @@ npm run generate:types   # Regenerate Supabase types from remote schema
 - **Tailwind CSS v4** with `@tailwindcss/vite` plugin
 - **Zod v4** for validation (schemas in `src/lib/schemas/`)
 - **LayerChart** (via `layerchart`) for charts, wrapped in `ChartContainer` from `$lib/components/ui/chart`
-- **Vitest** — only the `server` project is active (node, `.test.ts` files); the `client` browser project is commented out
+- **Vitest** — two projects: `server` (node, `tests-unit/**/*.{test,spec}.{js,ts}`) and `client` (headless chromium, `src/**/*.svelte.{test,spec}.{js,ts}`)
 
 ## Architecture
 
@@ -81,6 +83,14 @@ Standings sort: `standings_points` desc → `avg_score` desc (tiebreaker).
 - Unit tests use `.test.ts` (node); extract pure functions from SvelteKit server files into a co-located `utils.server.ts` to keep them testable without mocking the framework
 - Line charts use `LineChart` from `layerchart`, wrapped in `ChartContainer` from `$lib/components/ui/chart`
 
+### Testing
+
+- **Two Vitest projects:** `server` (node, `tests-unit/**/*.{test,spec}.{js,ts}`) and `client` (headless chromium, `src/**/*.svelte.{test,spec}.{js,ts}`). `npm run test` runs the server project only; run `test:client` for component tests.
+- **Mirror source** under `tests-unit/`. Extract pure logic into co-located `utils.server.ts` and unit-test it without mocking the framework.
+- **DB-touching code** (loads, actions, `+server.ts`) is tested with `tests-unit/helpers/mockSupabase.ts`: `createMockSupabase({ table: { data, error } })` returns a chainable, awaitable mock plus a recorded `calls` log; `formRequest`/`jsonRequest` stub the request; `adminLocals`/`playerLocals`/`anonLocals` build `event.locals`. `fail(...)` is returned (assert `.status`/`.data`); `redirect(...)`/`error(...)` throw (assert with `.rejects.toMatchObject({ status, location })`).
+- **Coverage** is enforced by `test:coverage` (istanbul) over server logic — see the `coverage.include` list in `vite.config.ts` (lines/functions/statements 80%, branches 70%).
+- **Deploy gate:** `vercel.json` runs `lint → check → test:coverage → build`; any failure blocks the deploy. Component/browser tests run locally/PR-side, not in the deploy build.
+
 ## Project
 
 **Game Olympics — Configurable Season Scoring**
@@ -123,9 +133,9 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - LayerChart ^2.0.0-next.43 - Charting library (pre-release)
 - Lucide Svelte ^0.577.0 - Icon library (`@lucide/svelte`)
 - Vitest ^4.1.0 - Test runner (server project only, node environment)
-- Playwright ^1.58.1 - Browser testing (client project currently commented out in config)
-- `@vitest/browser-playwright` ^4.0.18 - Browser test integration (inactive)
-- `vitest-browser-svelte` ^2.0.2 - Svelte browser test rendering (inactive)
+- Playwright ^1.58.1 - Browser testing (client project active in config)
+- `@vitest/browser-playwright` - Browser test integration (active; headless chromium)
+- `vitest-browser-svelte` ^2.0.2 - Svelte browser test rendering (active)
 - `@sveltejs/adapter-auto` ^7.0.0 - Auto-detecting deployment adapter
 - `@sveltejs/vite-plugin-svelte` ^7.0.0 - Svelte Vite integration
 - `@tailwindcss/vite` ^4.2.2 - Tailwind CSS Vite plugin
@@ -165,7 +175,7 @@ Game Olympics is a board game tracking app for a group of players competing acro
 - Config: embedded in `vite.config.ts`
 - `expect.requireAssertions: true` - All tests must contain assertions
 - Active project: `server` (node environment, tests in `tests-unit/**/*.{test,spec}.{js,ts}`)
-- Inactive project: `client` (browser/Playwright, commented out)
+- Active project: `client` (browser/Playwright, headless chromium; `src/**/*.svelte.{test,spec}.{js,ts}`)
 - Coverage provider: Istanbul
 - `.env` file present - contains Supabase connection vars (not read for security)
 - Public env vars accessed via `$env/static/public`: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`

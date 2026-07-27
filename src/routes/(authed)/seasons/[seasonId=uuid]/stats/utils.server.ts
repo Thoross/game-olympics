@@ -170,16 +170,22 @@ export function buildPlayers(sessions: NormalizedSession[]): Player[] {
 }
 
 export function buildSessionBreakdowns(sessions: NormalizedSession[]) {
-  return sessions.map((s) => ({
-    session_id: s.session_id,
-    date: new Date(s.session_date_played).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
-    game_name: s.game_name,
-    players: [...s.player_sessions].sort((a, b) => a.position - b.position),
-  }))
+  const gameCounts = new Map<string, number>()
+  return sessions.map((s) => {
+    const occurrence = (gameCounts.get(s.game_id) ?? 0) + 1
+    gameCounts.set(s.game_id, occurrence)
+    return {
+      session_id: s.session_id,
+      game_occurrence: occurrence,
+      date: new Date(s.session_date_played).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      game_name: s.game_name,
+      players: [...s.player_sessions].sort((a, b) => a.position - b.position),
+    }
+  })
 }
 
 export function buildStandingsOverTime(sessions: NormalizedSession[], players: Player[]) {

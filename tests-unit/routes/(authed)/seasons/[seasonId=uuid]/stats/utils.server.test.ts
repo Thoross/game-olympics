@@ -193,6 +193,18 @@ describe('buildSessionBreakdowns', () => {
     const [breakdown] = buildSessionBreakdowns(sessions)
     expect(breakdown.date).toBe('Mar 15, 2024')
   })
+
+  it('numbers sessions per game in chronological order', () => {
+    const sessions = [
+      makeSession({ session_id: 's-1', game_id: 'g-a', game_name: 'Game A', player_sessions: [] }),
+      makeSession({ session_id: 's-2', game_id: 'g-b', game_name: 'Game B', player_sessions: [] }),
+      makeSession({ session_id: 's-3', game_id: 'g-a', game_name: 'Game A', player_sessions: [] }),
+      makeSession({ session_id: 's-4', game_id: 'g-a', game_name: 'Game A', player_sessions: [] }),
+      makeSession({ session_id: 's-5', game_id: 'g-b', game_name: 'Game B', player_sessions: [] }),
+    ]
+    const occurrences = buildSessionBreakdowns(sessions).map((b) => b.game_occurrence)
+    expect(occurrences).toEqual([1, 1, 2, 3, 2])
+  })
 })
 
 // ─── buildStandingsOverTime ───────────────────────────────────────────────────

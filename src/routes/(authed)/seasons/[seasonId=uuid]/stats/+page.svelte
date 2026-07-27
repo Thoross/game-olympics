@@ -17,10 +17,12 @@
   let activeScores = $state(data.scoresByGame[0]?.game_id ?? '')
 
   const sessionItems = $derived(
-    data.sessionBreakdowns.map((s: { session_id: string; game_name: string }, i: number) => ({
-      value: s.session_id,
-      label: `${s.game_name} ${i + 1}`,
-    })),
+    data.sessionBreakdowns.map(
+      (s: { session_id: string; game_name: string; game_occurrence: number }) => ({
+        value: s.session_id,
+        label: `${s.game_name} ${s.game_occurrence}`,
+      }),
+    ),
   )
   const averagesItems = $derived([
     { value: 'season', label: 'Season' },
@@ -116,13 +118,13 @@
         <Tabs.Root bind:value={activeSession} class="gap-6">
           <MobileTabSelect bind:value={activeSession} items={sessionItems} />
           <Tabs.List class="hidden sm:inline-flex">
-            {#each data.sessionBreakdowns as session, i (session.session_id)}
+            {#each data.sessionBreakdowns as session (session.session_id)}
               <Tabs.Trigger
                 value={session.session_id}
                 class="data-[state='active']:text-primary-foreground data-[state=active]:bg-primary"
               >
                 {session.game_name}
-                {i + 1}
+                {session.game_occurrence}
               </Tabs.Trigger>
             {/each}
           </Tabs.List>

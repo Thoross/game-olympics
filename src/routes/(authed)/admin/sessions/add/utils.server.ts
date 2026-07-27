@@ -18,3 +18,22 @@ export function rankPlayers(playerEntries: PlayerEntry[]): RankedPlayer[] {
     }
   })
 }
+
+export type MetadataInputRow = {
+  player_session_id: string
+  fieldValues: { field_id: string; value: string }[]
+}
+
+export function collectMetadataInserts(
+  rows: MetadataInputRow[],
+): { player_session_id: string; field_id: string; value: string }[] {
+  const inserts: { player_session_id: string; field_id: string; value: string }[] = []
+  for (const row of rows) {
+    for (const fv of row.fieldValues) {
+      const value = fv.value.trim()
+      if (value === '') continue
+      inserts.push({ player_session_id: row.player_session_id, field_id: fv.field_id, value })
+    }
+  }
+  return inserts
+}

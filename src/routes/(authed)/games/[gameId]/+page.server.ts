@@ -1,7 +1,14 @@
 import { error, fail } from '@sveltejs/kit'
+import { z } from 'zod'
 import { isAdmin, requireAdmin } from '$lib/server/authorization'
 import { extractBggId, fetchBggGame } from '$lib/server/bgg.server'
-import { buildPlayerGameSeasonStats, type GameSessionRow } from './utils.server'
+import { metadataFieldSchema } from '$lib/schemas/metadata/field'
+import {
+  buildPlayerGameSeasonStats,
+  buildGameFieldBreakdowns,
+  nextDisplayOrder,
+  type GameSessionRow,
+} from './utils.server'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -18,6 +25,26 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   if (dbError || !game) {
     error(404, 'Game not found')
   }
+
+  const { data: metadataFields } = await locals.supabase
+    .from('game_metadata_fields')
+    .select('field_id, field_name, display_order')
+    .eq('game_id', gameId)
+    .order('display_order', { ascending: true })
+
+  const { data: valueRows } = await locals.supabase
+    .from('player_session_metadata')
+    .select('value, game_metadata_fields!inner ( field_name, game_id )')
+    .eq('game_metadata_fields.game_id', gameId)
+
+  const fieldBreakdowns = buildGameFieldBreakdowns(
+    (valueRows ?? []).map((r) => {
+      const f = Array.isArray(r.game_metadata_fields)
+        ? r.game_metadata_fields[0]
+        : r.game_metadata_fields
+      return { field_name: f?.field_name ?? '', value: r.value }
+    }),
+  )
 
   const playerId = locals.user?.player_id
 
@@ -69,7 +96,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     seasonStats = buildPlayerGameSeasonStats(normalized, multipliersBySeasonId, playerId)
   }
 
-  return { game, seasonStats, isAdmin: isAdmin(locals.user) }
+  return {
+    game,
+    seasonStats,
+    metadataFields: metadataFields ?? [],
+    fieldBreakdowns,
+    isAdmin: isAdmin(locals.user),
+  }
 }
 
 export const actions: Actions = {
@@ -116,5 +149,101 @@ export const actions: Actions = {
 
     console.info('refreshBgg: synced game', { gameId, bggId })
     return { success: true }
+  },
+
+  addMetadataField: async ({ params, request, locals }) => {
+    requireAdmin(locals.user)
+    const gameId = params.gameId!
+    const formData = await request.formData()
+
+    let field_name: string
+    try {
+      ;({ field_name } = metadataFieldSchema.parse({ field_name: formData.get('field_name') }))
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return fail(400, { fieldError: err.issues[0]?.message ?? 'Invalid field name.' })
+      }
+      return fail(500, { fieldError: 'Something went wrong.' })
+    }
+
+    const { data: existing } = await locals.supabase
+      .from('game_metadata_fields')
+      .select('display_order')
+      .eq('game_id', gameId)
+
+    const { error: insertError } = await locals.supabase
+      .from('game_metadata_fields')
+      .insert({ game_id: gameId, field_name, display_order: nextDisplayOrder(existing ?? []) })
+
+    if (insertError) {
+      // 23505 = unique_violation (duplicate field name for this game)
+      if (insertError.code === '23505') {
+        return fail(400, { fieldError: 'A field with that name already exists for this game.' })
+      }
+      return fail(500, { fieldError: 'Failed to add field.' })
+    }
+
+    return { fieldSuccess: true }
+  },
+
+  updateMetadataField: async ({ request, locals }) => {
+    requireAdmin(locals.user)
+    const formData = await request.formData()
+    const field_id = formData.get('field_id') as string
+    if (!field_id) return fail(400, { fieldError: 'Missing field.' })
+
+    let field_name: string
+    try {
+      ;({ field_name } = metadataFieldSchema.parse({ field_name: formData.get('field_name') }))
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return fail(400, { fieldError: err.issues[0]?.message ?? 'Invalid field name.' })
+      }
+      return fail(500, { fieldError: 'Something went wrong.' })
+    }
+
+    const { error: updateError } = await locals.supabase
+      .from('game_metadata_fields')
+      .update({ field_name })
+      .eq('field_id', field_id)
+
+    if (updateError) {
+      if (updateError.code === '23505') {
+        return fail(400, { fieldError: 'A field with that name already exists for this game.' })
+      }
+      return fail(500, { fieldError: 'Failed to rename field.' })
+    }
+
+    return { fieldSuccess: true }
+  },
+
+  removeMetadataField: async ({ request, locals }) => {
+    requireAdmin(locals.user)
+    const formData = await request.formData()
+    const field_id = formData.get('field_id') as string
+    if (!field_id) return fail(400, { fieldError: 'Missing field.' })
+
+    // Block deletion when recorded values exist — preserves history.
+    const { count } = await locals.supabase
+      .from('player_session_metadata')
+      .select('id', { count: 'exact', head: true })
+      .eq('field_id', field_id)
+
+    if ((count ?? 0) > 0) {
+      return fail(400, {
+        fieldError: 'This field has recorded values and can’t be deleted. Rename it instead.',
+      })
+    }
+
+    const { error: deleteError } = await locals.supabase
+      .from('game_metadata_fields')
+      .delete()
+      .eq('field_id', field_id)
+
+    if (deleteError) {
+      return fail(500, { fieldError: 'Failed to delete field.' })
+    }
+
+    return { fieldSuccess: true }
   },
 }

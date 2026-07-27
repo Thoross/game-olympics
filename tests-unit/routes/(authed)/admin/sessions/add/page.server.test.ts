@@ -68,7 +68,13 @@ describe('admin/sessions/add default action', () => {
     const { supabase, calls } = createMockSupabase({
       season_players: { data: [{ player_id: 'p1' }, { player_id: 'p2' }], error: null },
       sessions: { data: { session_id: 'sess1' }, error: null },
-      player_sessions: { data: null, error: null },
+      player_sessions: {
+        data: [
+          { player_session_id: 'ps1', player_id: 'p1' },
+          { player_session_id: 'ps2', player_id: 'p2' },
+        ],
+        error: null,
+      },
     })
     await expect(
       actions.default({

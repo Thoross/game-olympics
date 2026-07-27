@@ -4,6 +4,7 @@
   import { enhance } from '$app/forms'
   import { resolve } from '$app/paths'
   import Button from '$lib/components/ui/button/button.svelte'
+  import Input from '$lib/components/ui/input/input.svelte'
   import * as Card from '$lib/components/ui/card'
   import * as Tabs from '$lib/components/ui/tabs'
 
@@ -129,4 +130,68 @@
       </Tabs.Root>
     {/if}
   </section>
+
+  {#if data.isAdmin}
+    <section class="flex flex-col gap-3">
+      <h2 class="text-lg font-semibold">Metadata fields</h2>
+      <p class="text-sm text-muted-foreground">
+        Optional per-player fields recorded each session (e.g. Class, Faction).
+      </p>
+
+      {#if data.metadataFields.length > 0}
+        <ul class="flex flex-col gap-2">
+          {#each data.metadataFields as field (field.field_id)}
+            <li class="flex items-center gap-2">
+              <form
+                method="POST"
+                action="?/updateMetadataField"
+                use:enhance
+                class="flex flex-1 gap-2"
+              >
+                <input type="hidden" name="field_id" value={field.field_id} />
+                <Input name="field_name" value={field.field_name} class="flex-1" />
+                <Button type="submit" variant="outline" size="sm">Save</Button>
+              </form>
+              <form method="POST" action="?/removeMetadataField" use:enhance>
+                <input type="hidden" name="field_id" value={field.field_id} />
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="sm"
+                  class="text-muted-foreground hover:text-destructive"
+                >
+                  Delete
+                </Button>
+              </form>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <form method="POST" action="?/addMetadataField" use:enhance class="flex gap-2">
+        <Input name="field_name" placeholder="New field name" class="flex-1" />
+        <Button type="submit" variant="outline" size="sm">Add field</Button>
+      </form>
+
+      {#if form?.fieldError}
+        <p class="text-sm text-destructive">{form.fieldError}</p>
+      {/if}
+    </section>
+  {/if}
+
+  {#if data.fieldBreakdowns.length > 0}
+    <section class="flex flex-col gap-3">
+      <h2 class="text-lg font-semibold">Recorded history</h2>
+      {#each data.fieldBreakdowns as fb (fb.field_name)}
+        <div class="flex flex-col gap-1">
+          <h3 class="text-sm font-semibold">{fb.field_name}</h3>
+          <ul class="text-sm text-muted-foreground">
+            {#each fb.values as v (v.value)}
+              <li>{v.value} — {v.count}×</li>
+            {/each}
+          </ul>
+        </div>
+      {/each}
+    </section>
+  {/if}
 </div>

@@ -1,7 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit'
 import type { Actions, ServerLoad } from '@sveltejs/kit'
 import { requireAdmin } from '$lib/server/authorization'
-import { rankPlayers } from './utils.server.js'
+import { metadataValueSchema } from '$lib/schemas/metadata/field'
+import { rankPlayers, collectMetadataInserts } from './utils.server.js'
 
 export const load: ServerLoad = async ({ locals }) => {
   requireAdmin(locals.user)
@@ -34,10 +35,32 @@ export const load: ServerLoad = async ({ locals }) => {
     })
   }
 
+  const { data: fieldRows } = await locals.supabase
+    .from('game_metadata_fields')
+    .select('field_id, game_id, field_name, display_order')
+    .order('display_order', { ascending: true })
+
+  const { data: valueRows } = await locals.supabase
+    .from('player_session_metadata')
+    .select('field_id, value')
+
+  const fieldsByGame: Record<string, { field_id: string; field_name: string }[]> = {}
+  for (const f of fieldRows ?? []) {
+    ;(fieldsByGame[f.game_id] ??= []).push({ field_id: f.field_id, field_name: f.field_name })
+  }
+
+  const valuesByField: Record<string, string[]> = {}
+  for (const v of valueRows ?? []) {
+    const set = (valuesByField[v.field_id] ??= [])
+    if (!set.includes(v.value)) set.push(v.value)
+  }
+
   return {
     games: gamesResult.data ?? [],
     seasons,
     playersBySeason,
+    fieldsByGame,
+    valuesByField,
   }
 }
 
@@ -101,16 +124,56 @@ export const actions: Actions = {
       return fail(500, { message: 'Failed to create session.' })
     }
 
-    const inserts = rankPlayers(playerEntries).map((r) => ({
+    const ranked = rankPlayers(playerEntries)
+    const inserts = ranked.map((r) => ({
       session_id: sessionData.session_id,
       player_id: r.player_id,
       player_session_score: r.player_session_score,
       player_session_position: r.player_session_position,
     }))
 
-    const { error: psError } = await locals.supabase.from('player_sessions').insert(inserts)
-    if (psError) {
+    const { data: insertedPS, error: psError } = await locals.supabase
+      .from('player_sessions')
+      .insert(inserts)
+      .select('player_session_id, player_id')
+    if (psError || !insertedPS) {
       return fail(500, { message: 'Failed to save player results.' })
+    }
+
+    // Collect metadata values from the form, validated and keyed by player index.
+    const validFieldIds = new Set(
+      (
+        await locals.supabase.from('game_metadata_fields').select('field_id').eq('game_id', game_id)
+      ).data?.map((f) => f.field_id) ?? [],
+    )
+
+    const psIdByPlayer = new Map(insertedPS.map((r) => [r.player_id, r.player_session_id]))
+    const metaRows = []
+    for (let i = 0; i < player_count; i++) {
+      const player_id = playerEntries[i].player_id
+      const player_session_id = psIdByPlayer.get(player_id)
+      if (!player_session_id) continue
+      const fieldValues: { field_id: string; value: string }[] = []
+      for (const field_id of validFieldIds) {
+        const raw = formData.get(`meta_${i}_${field_id}`)
+        if (raw == null) continue
+        const parsed = metadataValueSchema.safeParse(raw)
+        if (!parsed.success) {
+          return fail(400, { message: `Metadata value for player ${i + 1} is too long.` })
+        }
+        fieldValues.push({ field_id, value: parsed.data })
+      }
+      metaRows.push({ player_session_id, fieldValues })
+    }
+
+    const metadataInserts = collectMetadataInserts(metaRows)
+    if (metadataInserts.length > 0) {
+      const { error: metaError } = await locals.supabase
+        .from('player_session_metadata')
+        .insert(metadataInserts)
+      if (metaError) {
+        return fail(500, { message: 'Failed to save player metadata.' })
+      }
     }
 
     redirect(303, `/seasons/${season_id}/sessions`)

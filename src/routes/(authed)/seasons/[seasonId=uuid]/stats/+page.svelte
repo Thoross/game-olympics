@@ -365,4 +365,38 @@
       </Card.Content>
     </Card.Root>
   {/if}
+
+  <!-- Metadata breakdowns -->
+  {#if data.metadataBreakdowns.length > 0}
+    <Card.Root>
+      <Card.Header>
+        <Card.Title>Metadata breakdowns</Card.Title>
+      </Card.Header>
+      <Card.Content class="flex flex-col gap-6">
+        {#each data.metadataBreakdowns as b (b.game_id + b.field_name)}
+          <div class="flex flex-col gap-2">
+            <h3 class="text-sm font-semibold">{b.game_name} — {b.field_name}</h3>
+            <Table.Root>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>{b.field_name}</Table.Head>
+                  <Table.Head class="text-right">Plays</Table.Head>
+                  <Table.Head class="text-right">Avg score</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {#each b.rows as row (row.value)}
+                  <Table.Row>
+                    <Table.Cell>{row.value}</Table.Cell>
+                    <Table.Cell class="text-right">{row.play_count}</Table.Cell>
+                    <Table.Cell class="text-right">{row.avg_score}</Table.Cell>
+                  </Table.Row>
+                {/each}
+              </Table.Body>
+            </Table.Root>
+          </div>
+        {/each}
+      </Card.Content>
+    </Card.Root>
+  {/if}
 </div>

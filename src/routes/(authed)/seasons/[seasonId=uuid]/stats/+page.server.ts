@@ -8,6 +8,7 @@ import {
   buildScoresByGame,
   buildSeasonAverages,
   buildGameAverages,
+  buildMetadataBreakdowns,
 } from './utils.server.js'
 
 export const load: ServerLoad = async ({ params, locals, parent }) => {
@@ -23,7 +24,8 @@ export const load: ServerLoad = async ({ params, locals, parent }) => {
       player_sessions (
         player_session_score,
         player_session_position,
-        player ( player_id, player_name )
+        player ( player_id, player_name ),
+        player_session_metadata ( value, game_metadata_fields ( field_name ) )
       )
     `,
     )
@@ -74,6 +76,25 @@ export const load: ServerLoad = async ({ params, locals, parent }) => {
   const seasonAverages = buildSeasonAverages(sessions)
   const gameAverages = buildGameAverages(sessions)
 
+  const metadataBreakdowns = buildMetadataBreakdowns(
+    rawSessions.map((s) => {
+      const game = Array.isArray(s.games) ? s.games[0] : s.games
+      return {
+        game_id: game?.game_id ?? '',
+        game_name: game?.game_name ?? '',
+        player_sessions: (s.player_sessions ?? []).map((ps) => ({
+          score: ps.player_session_score ?? 0,
+          metadata: (ps.player_session_metadata ?? []).map((m) => {
+            const f = Array.isArray(m.game_metadata_fields)
+              ? m.game_metadata_fields[0]
+              : m.game_metadata_fields
+            return { field_name: f?.field_name ?? '', value: m.value }
+          }),
+        })),
+      }
+    }),
+  )
+
   return {
     gameStats,
     sessionBreakdowns,
@@ -82,5 +103,6 @@ export const load: ServerLoad = async ({ params, locals, parent }) => {
     players,
     seasonAverages,
     gameAverages,
+    metadataBreakdowns,
   }
 }

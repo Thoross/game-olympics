@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildPlayerGameSeasonStats,
+  nextDisplayOrder,
   type GameSessionRow,
 } from '$routes/(authed)/games/[gameId]/utils.server'
 
@@ -93,5 +94,15 @@ describe('buildPlayerGameSeasonStats', () => {
 
   it('returns an empty array for no sessions', () => {
     expect(buildPlayerGameSeasonStats([], new Map(), P)).toEqual([])
+  })
+})
+
+describe('nextDisplayOrder', () => {
+  it('returns 0 for no fields', () => {
+    expect(nextDisplayOrder([])).toBe(0)
+  })
+
+  it('returns one past the current max', () => {
+    expect(nextDisplayOrder([{ display_order: 0 }, { display_order: 3 }])).toBe(4)
   })
 })

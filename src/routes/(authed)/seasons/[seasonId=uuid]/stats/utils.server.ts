@@ -239,3 +239,89 @@ export function buildScoresByGame(sessions: NormalizedSession[]) {
     })) as Record<string, number | string>[],
   }))
 }
+
+export type MetadataEntry = { field_name: string; value: string }
+
+export type MetadataBreakdownInput = {
+  game_id: string
+  game_name: string
+  player_sessions: { score: number; metadata: MetadataEntry[] }[]
+}
+
+export type MetadataBreakdownRow = { value: string; play_count: number; avg_score: number }
+
+export type MetadataFieldBreakdown = {
+  game_id: string
+  game_name: string
+  field_name: string
+  rows: MetadataBreakdownRow[]
+}
+
+export function buildMetadataBreakdowns(
+  sessions: MetadataBreakdownInput[],
+): MetadataFieldBreakdown[] {
+  // key: `${game_id} ${field_name} ${value}` → running totals
+  const agg = new Map<
+    string,
+    {
+      game_id: string
+      game_name: string
+      field_name: string
+      value: string
+      total: number
+      count: number
+    }
+  >()
+
+  for (const s of sessions) {
+    for (const ps of s.player_sessions) {
+      for (const m of ps.metadata) {
+        const key = `${s.game_id} ${m.field_name} ${m.value}`
+        const existing = agg.get(key)
+        if (existing) {
+          existing.total += ps.score
+          existing.count += 1
+        } else {
+          agg.set(key, {
+            game_id: s.game_id,
+            game_name: s.game_name,
+            field_name: m.field_name,
+            value: m.value,
+            total: ps.score,
+            count: 1,
+          })
+        }
+      }
+    }
+  }
+
+  // Group into game+field buckets.
+  const buckets = new Map<string, MetadataFieldBreakdown>()
+  for (const a of agg.values()) {
+    const bucketKey = `${a.game_id} ${a.field_name}`
+    const bucket =
+      buckets.get(bucketKey) ??
+      buckets
+        .set(bucketKey, {
+          game_id: a.game_id,
+          game_name: a.game_name,
+          field_name: a.field_name,
+          rows: [],
+        })
+        .get(bucketKey)!
+    bucket.rows.push({
+      value: a.value,
+      play_count: a.count,
+      avg_score: Number((a.total / a.count).toFixed(1)),
+    })
+  }
+
+  const result = [...buckets.values()]
+  for (const b of result) {
+    b.rows.sort((x, y) => y.play_count - x.play_count || x.value.localeCompare(y.value))
+  }
+  result.sort(
+    (a, b) => a.game_name.localeCompare(b.game_name) || a.field_name.localeCompare(b.field_name),
+  )
+  return result
+}

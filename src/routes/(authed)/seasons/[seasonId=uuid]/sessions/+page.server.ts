@@ -11,7 +11,8 @@ export const load: ServerLoad = async ({ params, locals }) => {
       player_sessions (
         player_session_score,
         player_session_position,
-        player ( player_name )
+        player ( player_name ),
+        player_session_metadata ( value, game_metadata_fields ( field_name ) )
       )
     `,
     )

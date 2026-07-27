@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { rankPlayers } from '$routes/(authed)/admin/sessions/add/utils.server'
+import {
+  rankPlayers,
+  collectMetadataInserts,
+} from '$routes/(authed)/admin/sessions/add/utils.server'
 
 // ─── rankPlayers ─────────────────────────────────────────────────────────────
 
@@ -86,5 +89,34 @@ describe('rankPlayers', () => {
       { player_id: 'p-bob', score: 8 },
     ])
     expect(result.map((r) => r.player_id)).toEqual(expect.arrayContaining(['p-alice', 'p-bob']))
+  })
+})
+
+// ─── collectMetadataInserts ──────────────────────────────────────────────────
+
+describe('collectMetadataInserts', () => {
+  it('builds one row per non-empty value', () => {
+    const result = collectMetadataInserts([
+      {
+        player_session_id: 'ps1',
+        fieldValues: [
+          { field_id: 'f1', value: 'Brute' },
+          { field_id: 'f2', value: '' },
+        ],
+      },
+      { player_session_id: 'ps2', fieldValues: [{ field_id: 'f1', value: '  Spellweaver ' }] },
+    ])
+    expect(result).toEqual([
+      { player_session_id: 'ps1', field_id: 'f1', value: 'Brute' },
+      { player_session_id: 'ps2', field_id: 'f1', value: 'Spellweaver' },
+    ])
+  })
+
+  it('returns an empty array when all values are blank', () => {
+    expect(
+      collectMetadataInserts([
+        { player_session_id: 'ps1', fieldValues: [{ field_id: 'f1', value: '   ' }] },
+      ]),
+    ).toEqual([])
   })
 })

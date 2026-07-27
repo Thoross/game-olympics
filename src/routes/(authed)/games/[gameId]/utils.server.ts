@@ -96,3 +96,36 @@ export function buildPlayerGameSeasonStats(
       total_standings_points: s.total_standings_points,
     }))
 }
+
+export function nextDisplayOrder(fields: { display_order: number }[]): number {
+  if (fields.length === 0) return 0
+  return Math.max(...fields.map((f) => f.display_order)) + 1
+}
+
+export type GameFieldBreakdown = {
+  field_name: string
+  values: { value: string; count: number }[]
+}
+
+export function buildGameFieldBreakdowns(
+  rows: { field_name: string; value: string }[],
+): GameFieldBreakdown[] {
+  const byField = new Map<string, Map<string, number>>()
+  for (const r of rows) {
+    const values =
+      byField.get(r.field_name) ?? byField.set(r.field_name, new Map()).get(r.field_name)!
+    values.set(r.value, (values.get(r.value) ?? 0) + 1)
+  }
+
+  const result: GameFieldBreakdown[] = []
+  for (const [field_name, values] of byField) {
+    result.push({
+      field_name,
+      values: [...values.entries()]
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value)),
+    })
+  }
+  result.sort((a, b) => a.field_name.localeCompare(b.field_name))
+  return result
+}

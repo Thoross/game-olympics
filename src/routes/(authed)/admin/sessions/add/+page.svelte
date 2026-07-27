@@ -24,6 +24,7 @@
 
   let selectedSeason = $derived(data.seasons.find((s) => s.season_id === seasonId))
   let selectedGame = $derived(data.games.find((g) => g.game_id === gameId))
+  let gameFields = $derived(gameId ? (data.fieldsByGame[gameId] ?? []) : [])
 
   let seasonRoster = $derived(data.playersBySeason[seasonId] ?? [])
   let availableChips = $derived(
@@ -69,6 +70,10 @@
     playerEntries.forEach((entry, i) => {
       formData.set(`player_id_${i}`, entry.player_id)
       formData.set(`score_${i}`, entry.score)
+      gameFields.forEach((f) => {
+        const el = document.getElementById(`meta_${i}_${f.field_id}`) as HTMLInputElement | null
+        formData.set(`meta_${i}_${f.field_id}`, el?.value ?? '')
+      })
     })
     loading = true
     return async ({ update }) => {
@@ -156,6 +161,21 @@
             }}
           />
         </div>
+
+        {#each gameFields as f (f.field_id)}
+          <div class="w-40">
+            <Input
+              id="meta_{i}_{f.field_id}"
+              list="datalist_{f.field_id}"
+              placeholder={f.field_name}
+            />
+            <datalist id="datalist_{f.field_id}">
+              {#each data.valuesByField[f.field_id] ?? [] as v (v)}
+                <option value={v}></option>
+              {/each}
+            </datalist>
+          </div>
+        {/each}
 
         <Button
           type="button"

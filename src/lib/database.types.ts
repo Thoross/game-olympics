@@ -8,6 +8,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      game_metadata_fields: {
+        Row: {
+          created_at: string
+          display_order: number
+          field_id: string
+          field_name: string
+          game_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          field_id?: string
+          field_name: string
+          game_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          field_id?: string
+          field_name?: string
+          game_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'game_metadata_fields_game_id_fkey'
+            columns: ['game_id']
+            isOneToOne: false
+            referencedRelation: 'games'
+            referencedColumns: ['game_id']
+          },
+        ]
+      }
       games: {
         Row: {
           created_at: string
@@ -73,6 +105,42 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      player_session_metadata: {
+        Row: {
+          field_id: string
+          id: string
+          player_session_id: string
+          value: string
+        }
+        Insert: {
+          field_id: string
+          id?: string
+          player_session_id: string
+          value: string
+        }
+        Update: {
+          field_id?: string
+          id?: string
+          player_session_id?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'player_session_metadata_field_id_fkey'
+            columns: ['field_id']
+            isOneToOne: false
+            referencedRelation: 'game_metadata_fields'
+            referencedColumns: ['field_id']
+          },
+          {
+            foreignKeyName: 'player_session_metadata_player_session_id_fkey'
+            columns: ['player_session_id']
+            isOneToOne: false
+            referencedRelation: 'player_sessions'
+            referencedColumns: ['player_session_id']
+          },
+        ]
       }
       player_sessions: {
         Row: {

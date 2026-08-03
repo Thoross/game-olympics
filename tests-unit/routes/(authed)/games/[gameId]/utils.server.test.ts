@@ -98,7 +98,7 @@ describe('buildPlayerGameSeasonStats', () => {
 })
 
 describe('nextDisplayOrder', () => {
-  it('returns 0 for no fields', () => {
+  it('returns 0 for no traits', () => {
     expect(nextDisplayOrder([])).toBe(0)
   })
 

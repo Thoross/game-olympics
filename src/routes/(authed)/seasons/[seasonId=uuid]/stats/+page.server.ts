@@ -8,7 +8,7 @@ import {
   buildScoresByGame,
   buildSeasonAverages,
   buildGameAverages,
-  buildMetadataBreakdowns,
+  buildGameTraitBreakdowns,
 } from './utils.server.js'
 
 export const load: ServerLoad = async ({ params, locals, parent }) => {
@@ -76,7 +76,8 @@ export const load: ServerLoad = async ({ params, locals, parent }) => {
   const seasonAverages = buildSeasonAverages(sessions)
   const gameAverages = buildGameAverages(sessions)
 
-  const metadataBreakdowns = buildMetadataBreakdowns(
+  // DB rows become traits and trait values here, at the query boundary (ADR-0002).
+  const traitBreakdowns = buildGameTraitBreakdowns(
     rawSessions.map((s) => {
       const game = Array.isArray(s.games) ? s.games[0] : s.games
       return {
@@ -84,11 +85,11 @@ export const load: ServerLoad = async ({ params, locals, parent }) => {
         game_name: game?.game_name ?? '',
         player_sessions: (s.player_sessions ?? []).map((ps) => ({
           score: ps.player_session_score ?? 0,
-          metadata: (ps.player_session_metadata ?? []).map((m) => {
+          traits: (ps.player_session_metadata ?? []).map((m) => {
             const f = Array.isArray(m.game_metadata_fields)
               ? m.game_metadata_fields[0]
               : m.game_metadata_fields
-            return { field_name: f?.field_name ?? '', value: m.value }
+            return { trait_name: f?.field_name ?? '', trait_value: m.value }
           }),
         })),
       }
@@ -103,6 +104,6 @@ export const load: ServerLoad = async ({ params, locals, parent }) => {
     players,
     seasonAverages,
     gameAverages,
-    metadataBreakdowns,
+    traitBreakdowns,
   }
 }

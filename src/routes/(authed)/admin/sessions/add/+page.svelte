@@ -24,7 +24,7 @@
 
   let selectedSeason = $derived(data.seasons.find((s) => s.season_id === seasonId))
   let selectedGame = $derived(data.games.find((g) => g.game_id === gameId))
-  let gameFields = $derived(gameId ? (data.fieldsByGame[gameId] ?? []) : [])
+  let gameTraits = $derived(gameId ? (data.traitsByGame[gameId] ?? []) : [])
 
   let seasonRoster = $derived(data.playersBySeason[seasonId] ?? [])
   let availableChips = $derived(
@@ -70,9 +70,9 @@
     playerEntries.forEach((entry, i) => {
       formData.set(`player_id_${i}`, entry.player_id)
       formData.set(`score_${i}`, entry.score)
-      gameFields.forEach((f) => {
-        const el = document.getElementById(`meta_${i}_${f.field_id}`) as HTMLInputElement | null
-        formData.set(`meta_${i}_${f.field_id}`, el?.value ?? '')
+      gameTraits.forEach((t) => {
+        const el = document.getElementById(`trait_${i}_${t.trait_id}`) as HTMLInputElement | null
+        formData.set(`trait_${i}_${t.trait_id}`, el?.value ?? '')
       })
     })
     loading = true
@@ -162,15 +162,15 @@
           />
         </div>
 
-        {#each gameFields as f (f.field_id)}
+        {#each gameTraits as t (t.trait_id)}
           <div class="w-40">
             <Input
-              id="meta_{i}_{f.field_id}"
-              list="datalist_{f.field_id}"
-              placeholder={f.field_name}
+              id="trait_{i}_{t.trait_id}"
+              list="datalist_{t.trait_id}"
+              placeholder={t.trait_name}
             />
-            <datalist id="datalist_{f.field_id}">
-              {#each data.valuesByField[f.field_id] ?? [] as v (v)}
+            <datalist id="datalist_{t.trait_id}">
+              {#each data.valuesByTrait[t.trait_id] ?? [] as v (v)}
                 <option value={v}></option>
               {/each}
             </datalist>

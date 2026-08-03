@@ -19,20 +19,26 @@ export function rankPlayers(playerEntries: PlayerEntry[]): RankedPlayer[] {
   })
 }
 
-export type MetadataInputRow = {
+export type TraitInputRow = {
   player_session_id: string
-  fieldValues: { field_id: string; value: string }[]
+  traitValues: { trait_id: string; trait_value: string }[]
 }
 
-export function collectMetadataInserts(
-  rows: MetadataInputRow[],
+/**
+ * Turn recorded trait values into `player_session_metadata` rows, dropping blanks.
+ *
+ * This is the write boundary: the returned rows are DB-shaped (`field_id`, `value`)
+ * because they go straight into the insert, while the input speaks traits (ADR-0002).
+ */
+export function collectTraitInserts(
+  rows: TraitInputRow[],
 ): { player_session_id: string; field_id: string; value: string }[] {
   const inserts: { player_session_id: string; field_id: string; value: string }[] = []
   for (const row of rows) {
-    for (const fv of row.fieldValues) {
-      const value = fv.value.trim()
+    for (const tv of row.traitValues) {
+      const value = tv.trait_value.trim()
       if (value === '') continue
-      inserts.push({ player_session_id: row.player_session_id, field_id: fv.field_id, value })
+      inserts.push({ player_session_id: row.player_session_id, field_id: tv.trait_id, value })
     }
   }
   return inserts

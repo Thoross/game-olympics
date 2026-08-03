@@ -52,7 +52,8 @@ One recorded setting of a trait, such as Brute or Soviets.
 _Avoid_: Metadata value, option, choice
 
 **Outing**:
-One session in which a given trait value was played. A trait value's evidence is its outings.
+One player's play of a given trait value in a session. Two players on the same trait value in
+one session are two outings. A trait value's evidence is its outings.
 _Avoid_: Appearance, instance
 
 **Trait Win Rate**:

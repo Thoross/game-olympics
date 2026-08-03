@@ -27,12 +27,12 @@
       .sort((a, b) => (a.player_session_position ?? 0) - (b.player_session_position ?? 0))
       .map((ps) => {
         const p = Array.isArray(ps.player) ? ps.player[0] : ps.player
-        const meta = (ps.player_session_metadata ?? [])
+        const traitValues = (ps.player_session_metadata ?? [])
           .map((m) => m.value)
           .filter((v) => v)
           .join(', ')
         const name = p?.player_name ?? '?'
-        return meta ? `${name} (${meta})` : name
+        return traitValues ? `${name} (${traitValues})` : name
       })
       .join(', ')
   }

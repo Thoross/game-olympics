@@ -109,7 +109,8 @@ export type TraitBreakdown = {
 
 /**
  * Per-trait tallies of how many outings each trait value has — an outing being
- * one session in which that trait value was played.
+ * one player's play of that trait value in a session, so two players on the same
+ * trait value in one session count twice.
  */
 export function buildTraitBreakdowns(
   rows: { trait_name: string; trait_value: string }[],

@@ -237,7 +237,7 @@ export const actions: Actions = {
         .in('player_session_id', currentPsIds)
     }
 
-    const traitRows = []
+    const traitInputRows = []
     for (let i = 0; i < player_count; i++) {
       const player_session_id = psIdByPlayer.get(playerEntries[i].player_id)
       if (!player_session_id) continue
@@ -251,10 +251,10 @@ export const actions: Actions = {
         }
         traitValues.push({ trait_id, trait_value: parsed.data })
       }
-      traitRows.push({ player_session_id, traitValues })
+      traitInputRows.push({ player_session_id, traitValues })
     }
 
-    const traitInserts = collectTraitInserts(traitRows)
+    const traitInserts = collectTraitInserts(traitInputRows)
     if (traitInserts.length > 0) {
       const { error: traitError } = await locals.supabase
         .from('player_session_metadata')

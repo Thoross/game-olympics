@@ -265,7 +265,8 @@ export type GameTraitBreakdown = {
 
 /**
  * Per game and trait, how each trait value has fared across the season — its
- * outings (sessions in which it was played) and the average score across them.
+ * outings (one per player who played it in a session) and the average score
+ * across them.
  */
 export function buildGameTraitBreakdowns(sessions: TraitBreakdownInput[]): GameTraitBreakdown[] {
   // key: `${game_id} ${trait_name} ${trait_value}` → running totals

@@ -44,6 +44,7 @@ npm-debug.log*
 
 .planning/*
 supabase/.temp
+docs/superpowers
 
 .claude/settings.local.json
 

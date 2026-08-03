@@ -2,10 +2,10 @@ import { error, fail } from '@sveltejs/kit'
 import { z } from 'zod'
 import { isAdmin, requireAdmin } from '$lib/server/authorization'
 import { extractBggId, fetchBggGame } from '$lib/server/bgg.server'
-import { metadataFieldSchema } from '$lib/schemas/metadata/field'
+import { traitSchema } from '$lib/schemas/trait'
 import {
   buildPlayerGameSeasonStats,
-  buildGameFieldBreakdowns,
+  buildTraitBreakdowns,
   nextDisplayOrder,
   type GameSessionRow,
 } from './utils.server'
@@ -26,23 +26,31 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     error(404, 'Game not found')
   }
 
-  const { data: metadataFields } = await locals.supabase
+  // The `game_metadata_fields` / `player_session_metadata` tables hold traits and
+  // trait values — the DB names stop here, at the query boundary (see ADR-0002).
+  const { data: traitRows } = await locals.supabase
     .from('game_metadata_fields')
     .select('field_id, field_name, display_order')
     .eq('game_id', gameId)
     .order('display_order', { ascending: true })
+
+  const traits = (traitRows ?? []).map((t) => ({
+    trait_id: t.field_id,
+    trait_name: t.field_name,
+    display_order: t.display_order,
+  }))
 
   const { data: valueRows } = await locals.supabase
     .from('player_session_metadata')
     .select('value, game_metadata_fields!inner ( field_name, game_id )')
     .eq('game_metadata_fields.game_id', gameId)
 
-  const fieldBreakdowns = buildGameFieldBreakdowns(
+  const traitBreakdowns = buildTraitBreakdowns(
     (valueRows ?? []).map((r) => {
       const f = Array.isArray(r.game_metadata_fields)
         ? r.game_metadata_fields[0]
         : r.game_metadata_fields
-      return { field_name: f?.field_name ?? '', value: r.value }
+      return { trait_name: f?.field_name ?? '', trait_value: r.value }
     }),
   )
 
@@ -99,8 +107,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   return {
     game,
     seasonStats,
-    metadataFields: metadataFields ?? [],
-    fieldBreakdowns,
+    traits,
+    traitBreakdowns,
     isAdmin: isAdmin(locals.user),
   }
 }
@@ -151,19 +159,19 @@ export const actions: Actions = {
     return { success: true }
   },
 
-  addMetadataField: async ({ params, request, locals }) => {
+  addTrait: async ({ params, request, locals }) => {
     requireAdmin(locals.user)
     const gameId = params.gameId!
     const formData = await request.formData()
 
-    let field_name: string
+    let trait_name: string
     try {
-      ;({ field_name } = metadataFieldSchema.parse({ field_name: formData.get('field_name') }))
+      ;({ trait_name } = traitSchema.parse({ trait_name: formData.get('trait_name') }))
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return fail(400, { fieldError: err.issues[0]?.message ?? 'Invalid field name.' })
+        return fail(400, { traitError: err.issues[0]?.message ?? 'Invalid trait name.' })
       }
-      return fail(500, { fieldError: 'Something went wrong.' })
+      return fail(500, { traitError: 'Something went wrong.' })
     }
 
     const { data: existing } = await locals.supabase
@@ -171,79 +179,81 @@ export const actions: Actions = {
       .select('display_order')
       .eq('game_id', gameId)
 
-    const { error: insertError } = await locals.supabase
-      .from('game_metadata_fields')
-      .insert({ game_id: gameId, field_name, display_order: nextDisplayOrder(existing ?? []) })
+    const { error: insertError } = await locals.supabase.from('game_metadata_fields').insert({
+      game_id: gameId,
+      field_name: trait_name,
+      display_order: nextDisplayOrder(existing ?? []),
+    })
 
     if (insertError) {
-      // 23505 = unique_violation (duplicate field name for this game)
+      // 23505 = unique_violation (duplicate trait name for this game)
       if (insertError.code === '23505') {
-        return fail(400, { fieldError: 'A field with that name already exists for this game.' })
+        return fail(400, { traitError: 'A trait with that name already exists for this game.' })
       }
-      return fail(500, { fieldError: 'Failed to add field.' })
+      return fail(500, { traitError: 'Failed to add trait.' })
     }
 
-    return { fieldSuccess: true }
+    return { traitSuccess: true }
   },
 
-  updateMetadataField: async ({ request, locals }) => {
+  updateTrait: async ({ request, locals }) => {
     requireAdmin(locals.user)
     const formData = await request.formData()
-    const field_id = formData.get('field_id') as string
-    if (!field_id) return fail(400, { fieldError: 'Missing field.' })
+    const trait_id = formData.get('trait_id') as string
+    if (!trait_id) return fail(400, { traitError: 'Missing trait.' })
 
-    let field_name: string
+    let trait_name: string
     try {
-      ;({ field_name } = metadataFieldSchema.parse({ field_name: formData.get('field_name') }))
+      ;({ trait_name } = traitSchema.parse({ trait_name: formData.get('trait_name') }))
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return fail(400, { fieldError: err.issues[0]?.message ?? 'Invalid field name.' })
+        return fail(400, { traitError: err.issues[0]?.message ?? 'Invalid trait name.' })
       }
-      return fail(500, { fieldError: 'Something went wrong.' })
+      return fail(500, { traitError: 'Something went wrong.' })
     }
 
     const { error: updateError } = await locals.supabase
       .from('game_metadata_fields')
-      .update({ field_name })
-      .eq('field_id', field_id)
+      .update({ field_name: trait_name })
+      .eq('field_id', trait_id)
 
     if (updateError) {
       if (updateError.code === '23505') {
-        return fail(400, { fieldError: 'A field with that name already exists for this game.' })
+        return fail(400, { traitError: 'A trait with that name already exists for this game.' })
       }
-      return fail(500, { fieldError: 'Failed to rename field.' })
+      return fail(500, { traitError: 'Failed to rename trait.' })
     }
 
-    return { fieldSuccess: true }
+    return { traitSuccess: true }
   },
 
-  removeMetadataField: async ({ request, locals }) => {
+  removeTrait: async ({ request, locals }) => {
     requireAdmin(locals.user)
     const formData = await request.formData()
-    const field_id = formData.get('field_id') as string
-    if (!field_id) return fail(400, { fieldError: 'Missing field.' })
+    const trait_id = formData.get('trait_id') as string
+    if (!trait_id) return fail(400, { traitError: 'Missing trait.' })
 
-    // Block deletion when recorded values exist — preserves history.
+    // Block deletion when recorded trait values exist — preserves history.
     const { count } = await locals.supabase
       .from('player_session_metadata')
       .select('id', { count: 'exact', head: true })
-      .eq('field_id', field_id)
+      .eq('field_id', trait_id)
 
     if ((count ?? 0) > 0) {
       return fail(400, {
-        fieldError: 'This field has recorded values and can’t be deleted. Rename it instead.',
+        traitError: 'This trait has recorded values and can’t be deleted. Rename it instead.',
       })
     }
 
     const { error: deleteError } = await locals.supabase
       .from('game_metadata_fields')
       .delete()
-      .eq('field_id', field_id)
+      .eq('field_id', trait_id)
 
     if (deleteError) {
-      return fail(500, { fieldError: 'Failed to delete field.' })
+      return fail(500, { traitError: 'Failed to delete trait.' })
     }
 
-    return { fieldSuccess: true }
+    return { traitSuccess: true }
   },
 }

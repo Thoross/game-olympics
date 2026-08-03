@@ -1,8 +1,8 @@
 import { fail, redirect, error } from '@sveltejs/kit'
 import type { Actions, ServerLoad } from '@sveltejs/kit'
 import { requireAdmin } from '$lib/server/authorization'
-import { metadataValueSchema } from '$lib/schemas/metadata/field'
-import { rankPlayers, collectMetadataInserts } from '../../add/utils.server.js'
+import { traitValueSchema } from '$lib/schemas/trait'
+import { rankPlayers, collectTraitInserts } from '../../add/utils.server.js'
 import { reconcilePlayerSessions } from './utils.server.js'
 
 export const load: ServerLoad = async ({ params, locals }) => {
@@ -60,13 +60,15 @@ export const load: ServerLoad = async ({ params, locals }) => {
         player_id: p?.player_id ?? ps.player_id,
         player_name: p?.player_name ?? ps.player_id,
         score: ps.player_session_score,
-        metadata: Object.fromEntries(
+        traits: Object.fromEntries(
           (ps.player_session_metadata ?? []).map((m) => [m.field_id, m.value]),
         ) as Record<string, string>,
       }
     })
 
-  const { data: fieldRows } = await locals.supabase
+  // DB names stop at the query boundary — these rows are traits and trait values
+  // in the application layer (ADR-0002).
+  const { data: traitRows } = await locals.supabase
     .from('game_metadata_fields')
     .select('field_id, game_id, field_name, display_order')
     .order('display_order', { ascending: true })
@@ -75,14 +77,14 @@ export const load: ServerLoad = async ({ params, locals }) => {
     .from('player_session_metadata')
     .select('field_id, value')
 
-  const fieldsByGame: Record<string, { field_id: string; field_name: string }[]> = {}
-  for (const f of fieldRows ?? []) {
-    ;(fieldsByGame[f.game_id] ??= []).push({ field_id: f.field_id, field_name: f.field_name })
+  const traitsByGame: Record<string, { trait_id: string; trait_name: string }[]> = {}
+  for (const t of traitRows ?? []) {
+    ;(traitsByGame[t.game_id] ??= []).push({ trait_id: t.field_id, trait_name: t.field_name })
   }
 
-  const valuesByField: Record<string, string[]> = {}
+  const valuesByTrait: Record<string, string[]> = {}
   for (const v of valueRows ?? []) {
-    const set = (valuesByField[v.field_id] ??= [])
+    const set = (valuesByTrait[v.field_id] ??= [])
     if (!set.includes(v.value)) set.push(v.value)
   }
 
@@ -97,8 +99,8 @@ export const load: ServerLoad = async ({ params, locals }) => {
     },
     games: gamesResult.data ?? [],
     roster,
-    fieldsByGame,
-    valuesByField,
+    traitsByGame,
+    valuesByTrait,
   }
 }
 
@@ -219,13 +221,13 @@ export const actions: Actions = {
       if (row.player_id) psIdByPlayer.set(row.player_id, row.player_session_id)
     }
 
-    const validFieldIds = new Set(
+    const validTraitIds = new Set(
       (
         await locals.supabase.from('game_metadata_fields').select('field_id').eq('game_id', game_id)
-      ).data?.map((f) => f.field_id) ?? [],
+      ).data?.map((t) => t.field_id) ?? [],
     )
 
-    // Rewrite metadata for all current player-sessions: delete then re-insert
+    // Rewrite trait values for all current player-sessions: delete then re-insert
     // the non-empty submitted values (keyed by stable player_session_id).
     const currentPsIds = [...psIdByPlayer.values()]
     if (currentPsIds.length > 0) {
@@ -235,29 +237,29 @@ export const actions: Actions = {
         .in('player_session_id', currentPsIds)
     }
 
-    const metaRows = []
+    const traitRows = []
     for (let i = 0; i < player_count; i++) {
       const player_session_id = psIdByPlayer.get(playerEntries[i].player_id)
       if (!player_session_id) continue
-      const fieldValues: { field_id: string; value: string }[] = []
-      for (const field_id of validFieldIds) {
-        const raw = formData.get(`meta_${i}_${field_id}`)
+      const traitValues: { trait_id: string; trait_value: string }[] = []
+      for (const trait_id of validTraitIds) {
+        const raw = formData.get(`trait_${i}_${trait_id}`)
         if (raw == null) continue
-        const parsed = metadataValueSchema.safeParse(raw)
+        const parsed = traitValueSchema.safeParse(raw)
         if (!parsed.success) {
-          return fail(400, { message: `Metadata value for player ${i + 1} is too long.` })
+          return fail(400, { message: `Trait value for player ${i + 1} is too long.` })
         }
-        fieldValues.push({ field_id, value: parsed.data })
+        traitValues.push({ trait_id, trait_value: parsed.data })
       }
-      metaRows.push({ player_session_id, fieldValues })
+      traitRows.push({ player_session_id, traitValues })
     }
 
-    const metadataInserts = collectMetadataInserts(metaRows)
-    if (metadataInserts.length > 0) {
-      const { error: metaError } = await locals.supabase
+    const traitInserts = collectTraitInserts(traitRows)
+    if (traitInserts.length > 0) {
+      const { error: traitError } = await locals.supabase
         .from('player_session_metadata')
-        .insert(metadataInserts)
-      if (metaError) return fail(500, { message: 'Failed to save player metadata.' })
+        .insert(traitInserts)
+      if (traitError) return fail(500, { message: 'Failed to save player traits.' })
     }
 
     redirect(303, `/seasons/${season_id}/sessions`)

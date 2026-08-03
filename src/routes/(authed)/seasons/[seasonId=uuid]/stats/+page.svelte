@@ -368,29 +368,29 @@
     </Card.Root>
   {/if}
 
-  <!-- Metadata breakdowns -->
-  {#if data.metadataBreakdowns.length > 0}
+  <!-- Trait breakdowns -->
+  {#if data.traitBreakdowns.length > 0}
     <Card.Root>
       <Card.Header>
-        <Card.Title>Metadata breakdowns</Card.Title>
+        <Card.Title>Trait breakdowns</Card.Title>
       </Card.Header>
       <Card.Content class="flex flex-col gap-6">
-        {#each data.metadataBreakdowns as b (b.game_id + b.field_name)}
+        {#each data.traitBreakdowns as b (b.game_id + b.trait_name)}
           <div class="flex flex-col gap-2">
-            <h3 class="text-sm font-semibold">{b.game_name} — {b.field_name}</h3>
+            <h3 class="text-sm font-semibold">{b.game_name} — {b.trait_name}</h3>
             <Table.Root>
               <Table.Header>
                 <Table.Row>
-                  <Table.Head>{b.field_name}</Table.Head>
-                  <Table.Head class="text-right">Plays</Table.Head>
+                  <Table.Head>{b.trait_name}</Table.Head>
+                  <Table.Head class="text-right">Outings</Table.Head>
                   <Table.Head class="text-right">Avg score</Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {#each b.rows as row (row.value)}
+                {#each b.rows as row (row.trait_value)}
                   <Table.Row>
-                    <Table.Cell>{row.value}</Table.Cell>
-                    <Table.Cell class="text-right">{row.play_count}</Table.Cell>
+                    <Table.Cell>{row.trait_value}</Table.Cell>
+                    <Table.Cell class="text-right">{row.outings}</Table.Cell>
                     <Table.Cell class="text-right">{row.avg_score}</Table.Cell>
                   </Table.Row>
                 {/each}

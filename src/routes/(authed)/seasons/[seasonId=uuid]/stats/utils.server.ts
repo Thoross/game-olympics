@@ -246,88 +246,90 @@ export function buildScoresByGame(sessions: NormalizedSession[]) {
   }))
 }
 
-export type MetadataEntry = { field_name: string; value: string }
+export type TraitEntry = { trait_name: string; trait_value: string }
 
-export type MetadataBreakdownInput = {
+export type TraitBreakdownInput = {
   game_id: string
   game_name: string
-  player_sessions: { score: number; metadata: MetadataEntry[] }[]
+  player_sessions: { score: number; traits: TraitEntry[] }[]
 }
 
-export type MetadataBreakdownRow = { value: string; play_count: number; avg_score: number }
+export type TraitBreakdownRow = { trait_value: string; outings: number; avg_score: number }
 
-export type MetadataFieldBreakdown = {
+export type GameTraitBreakdown = {
   game_id: string
   game_name: string
-  field_name: string
-  rows: MetadataBreakdownRow[]
+  trait_name: string
+  rows: TraitBreakdownRow[]
 }
 
-export function buildMetadataBreakdowns(
-  sessions: MetadataBreakdownInput[],
-): MetadataFieldBreakdown[] {
-  // key: `${game_id} ${field_name} ${value}` → running totals
+/**
+ * Per game and trait, how each trait value has fared across the season — its
+ * outings (sessions in which it was played) and the average score across them.
+ */
+export function buildGameTraitBreakdowns(sessions: TraitBreakdownInput[]): GameTraitBreakdown[] {
+  // key: `${game_id} ${trait_name} ${trait_value}` → running totals
   const agg = new Map<
     string,
     {
       game_id: string
       game_name: string
-      field_name: string
-      value: string
+      trait_name: string
+      trait_value: string
       total: number
-      count: number
+      outings: number
     }
   >()
 
   for (const s of sessions) {
     for (const ps of s.player_sessions) {
-      for (const m of ps.metadata) {
-        const key = `${s.game_id} ${m.field_name} ${m.value}`
+      for (const t of ps.traits) {
+        const key = `${s.game_id} ${t.trait_name} ${t.trait_value}`
         const existing = agg.get(key)
         if (existing) {
           existing.total += ps.score
-          existing.count += 1
+          existing.outings += 1
         } else {
           agg.set(key, {
             game_id: s.game_id,
             game_name: s.game_name,
-            field_name: m.field_name,
-            value: m.value,
+            trait_name: t.trait_name,
+            trait_value: t.trait_value,
             total: ps.score,
-            count: 1,
+            outings: 1,
           })
         }
       }
     }
   }
 
-  // Group into game+field buckets.
-  const buckets = new Map<string, MetadataFieldBreakdown>()
+  // Group into game+trait buckets.
+  const buckets = new Map<string, GameTraitBreakdown>()
   for (const a of agg.values()) {
-    const bucketKey = `${a.game_id} ${a.field_name}`
+    const bucketKey = `${a.game_id} ${a.trait_name}`
     const bucket =
       buckets.get(bucketKey) ??
       buckets
         .set(bucketKey, {
           game_id: a.game_id,
           game_name: a.game_name,
-          field_name: a.field_name,
+          trait_name: a.trait_name,
           rows: [],
         })
         .get(bucketKey)!
     bucket.rows.push({
-      value: a.value,
-      play_count: a.count,
-      avg_score: Number((a.total / a.count).toFixed(1)),
+      trait_value: a.trait_value,
+      outings: a.outings,
+      avg_score: Number((a.total / a.outings).toFixed(1)),
     })
   }
 
   const result = [...buckets.values()]
   for (const b of result) {
-    b.rows.sort((x, y) => y.play_count - x.play_count || x.value.localeCompare(y.value))
+    b.rows.sort((x, y) => y.outings - x.outings || x.trait_value.localeCompare(y.trait_value))
   }
   result.sort(
-    (a, b) => a.game_name.localeCompare(b.game_name) || a.field_name.localeCompare(b.field_name),
+    (a, b) => a.game_name.localeCompare(b.game_name) || a.trait_name.localeCompare(b.trait_name),
   )
   return result
 }

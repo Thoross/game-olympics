@@ -97,35 +97,39 @@ export function buildPlayerGameSeasonStats(
     }))
 }
 
-export function nextDisplayOrder(fields: { display_order: number }[]): number {
-  if (fields.length === 0) return 0
-  return Math.max(...fields.map((f) => f.display_order)) + 1
+export function nextDisplayOrder(traits: { display_order: number }[]): number {
+  if (traits.length === 0) return 0
+  return Math.max(...traits.map((t) => t.display_order)) + 1
 }
 
-export type GameFieldBreakdown = {
-  field_name: string
-  values: { value: string; count: number }[]
+export type TraitBreakdown = {
+  trait_name: string
+  values: { trait_value: string; outings: number }[]
 }
 
-export function buildGameFieldBreakdowns(
-  rows: { field_name: string; value: string }[],
-): GameFieldBreakdown[] {
-  const byField = new Map<string, Map<string, number>>()
+/**
+ * Per-trait tallies of how many outings each trait value has — an outing being
+ * one session in which that trait value was played.
+ */
+export function buildTraitBreakdowns(
+  rows: { trait_name: string; trait_value: string }[],
+): TraitBreakdown[] {
+  const byTrait = new Map<string, Map<string, number>>()
   for (const r of rows) {
     const values =
-      byField.get(r.field_name) ?? byField.set(r.field_name, new Map()).get(r.field_name)!
-    values.set(r.value, (values.get(r.value) ?? 0) + 1)
+      byTrait.get(r.trait_name) ?? byTrait.set(r.trait_name, new Map()).get(r.trait_name)!
+    values.set(r.trait_value, (values.get(r.trait_value) ?? 0) + 1)
   }
 
-  const result: GameFieldBreakdown[] = []
-  for (const [field_name, values] of byField) {
+  const result: TraitBreakdown[] = []
+  for (const [trait_name, values] of byTrait) {
     result.push({
-      field_name,
+      trait_name,
       values: [...values.entries()]
-        .map(([value, count]) => ({ value, count }))
-        .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value)),
+        .map(([trait_value, outings]) => ({ trait_value, outings }))
+        .sort((a, b) => b.outings - a.outings || a.trait_value.localeCompare(b.trait_value)),
     })
   }
-  result.sort((a, b) => a.field_name.localeCompare(b.field_name))
+  result.sort((a, b) => a.trait_name.localeCompare(b.trait_name))
   return result
 }

@@ -25,15 +25,15 @@
   let loading = $state(false)
 
   let selectedGame = $derived(data.games.find((g) => g.game_id === gameId))
-  let gameFields = $derived(gameId ? (data.fieldsByGame[gameId] ?? []) : [])
+  let gameTraits = $derived(gameId ? (data.traitsByGame[gameId] ?? []) : [])
 
   let availableChips = $derived(
     data.roster.filter((p) => !playerEntries.some((e) => e.player_id === p.player_id)),
   )
 
-  // Existing per-player metadata values, keyed by player_id then field_id, for prefill.
-  const existingMetadata: Record<string, Record<string, string>> = Object.fromEntries(
-    data.session.players.map((p) => [p.player_id, p.metadata ?? {}]),
+  // Existing per-player trait values, keyed by player_id then trait_id, for prefill.
+  const existingTraits: Record<string, Record<string, string>> = Object.fromEntries(
+    data.session.players.map((p) => [p.player_id, p.traits ?? {}]),
   )
 
   function addPlayer(p: { player_id: string; player_name: string }) {
@@ -67,9 +67,9 @@
     playerEntries.forEach((entry, i) => {
       formData.set(`player_id_${i}`, entry.player_id)
       formData.set(`score_${i}`, entry.score)
-      gameFields.forEach((f) => {
-        const el = document.getElementById(`meta_${i}_${f.field_id}`) as HTMLInputElement | null
-        formData.set(`meta_${i}_${f.field_id}`, el?.value ?? '')
+      gameTraits.forEach((t) => {
+        const el = document.getElementById(`trait_${i}_${t.trait_id}`) as HTMLInputElement | null
+        formData.set(`trait_${i}_${t.trait_id}`, el?.value ?? '')
       })
     })
     loading = true
@@ -147,16 +147,16 @@
           />
         </div>
 
-        {#each gameFields as f (f.field_id)}
+        {#each gameTraits as t (t.trait_id)}
           <div class="w-40">
             <Input
-              id="meta_{i}_{f.field_id}"
-              list="datalist_{f.field_id}"
-              placeholder={f.field_name}
-              value={existingMetadata[entry.player_id]?.[f.field_id] ?? ''}
+              id="trait_{i}_{t.trait_id}"
+              list="datalist_{t.trait_id}"
+              placeholder={t.trait_name}
+              value={existingTraits[entry.player_id]?.[t.trait_id] ?? ''}
             />
-            <datalist id="datalist_{f.field_id}">
-              {#each data.valuesByField[f.field_id] ?? [] as v (v)}
+            <datalist id="datalist_{t.trait_id}">
+              {#each data.valuesByTrait[t.trait_id] ?? [] as v (v)}
                 <option value={v}></option>
               {/each}
             </datalist>

@@ -133,27 +133,22 @@
 
   {#if data.isAdmin}
     <section class="flex flex-col gap-3">
-      <h2 class="text-lg font-semibold">Metadata fields</h2>
+      <h2 class="text-lg font-semibold">Traits</h2>
       <p class="text-sm text-muted-foreground">
-        Optional per-player fields recorded each session (e.g. Class, Faction).
+        Optional per-player traits recorded each session (e.g. Class, Faction).
       </p>
 
-      {#if data.metadataFields.length > 0}
+      {#if data.traits.length > 0}
         <ul class="flex flex-col gap-2">
-          {#each data.metadataFields as field (field.field_id)}
+          {#each data.traits as trait (trait.trait_id)}
             <li class="flex items-center gap-2">
-              <form
-                method="POST"
-                action="?/updateMetadataField"
-                use:enhance
-                class="flex flex-1 gap-2"
-              >
-                <input type="hidden" name="field_id" value={field.field_id} />
-                <Input name="field_name" value={field.field_name} class="flex-1" />
+              <form method="POST" action="?/updateTrait" use:enhance class="flex flex-1 gap-2">
+                <input type="hidden" name="trait_id" value={trait.trait_id} />
+                <Input name="trait_name" value={trait.trait_name} class="flex-1" />
                 <Button type="submit" variant="outline" size="sm">Save</Button>
               </form>
-              <form method="POST" action="?/removeMetadataField" use:enhance>
-                <input type="hidden" name="field_id" value={field.field_id} />
+              <form method="POST" action="?/removeTrait" use:enhance>
+                <input type="hidden" name="trait_id" value={trait.trait_id} />
                 <Button
                   type="submit"
                   variant="ghost"
@@ -168,26 +163,26 @@
         </ul>
       {/if}
 
-      <form method="POST" action="?/addMetadataField" use:enhance class="flex gap-2">
-        <Input name="field_name" placeholder="New field name" class="flex-1" />
-        <Button type="submit" variant="outline" size="sm">Add field</Button>
+      <form method="POST" action="?/addTrait" use:enhance class="flex gap-2">
+        <Input name="trait_name" placeholder="New trait name" class="flex-1" />
+        <Button type="submit" variant="outline" size="sm">Add trait</Button>
       </form>
 
-      {#if form?.fieldError}
-        <p class="text-sm text-destructive">{form.fieldError}</p>
+      {#if form?.traitError}
+        <p class="text-sm text-destructive">{form.traitError}</p>
       {/if}
     </section>
   {/if}
 
-  {#if data.fieldBreakdowns.length > 0}
+  {#if data.traitBreakdowns.length > 0}
     <section class="flex flex-col gap-3">
       <h2 class="text-lg font-semibold">Recorded history</h2>
-      {#each data.fieldBreakdowns as fb (fb.field_name)}
+      {#each data.traitBreakdowns as tb (tb.trait_name)}
         <div class="flex flex-col gap-1">
-          <h3 class="text-sm font-semibold">{fb.field_name}</h3>
+          <h3 class="text-sm font-semibold">{tb.trait_name}</h3>
           <ul class="text-sm text-muted-foreground">
-            {#each fb.values as v (v.value)}
-              <li>{v.value} — {v.count}×</li>
+            {#each tb.values as v (v.trait_value)}
+              <li>{v.trait_value} — {v.outings}×</li>
             {/each}
           </ul>
         </div>

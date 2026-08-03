@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  rankPlayers,
-  collectMetadataInserts,
-} from '$routes/(authed)/admin/sessions/add/utils.server'
+import { rankPlayers, collectTraitInserts } from '$routes/(authed)/admin/sessions/add/utils.server'
 
 // ─── rankPlayers ─────────────────────────────────────────────────────────────
 
@@ -92,30 +89,33 @@ describe('rankPlayers', () => {
   })
 })
 
-// ─── collectMetadataInserts ──────────────────────────────────────────────────
+// ─── collectTraitInserts ─────────────────────────────────────────────────────
 
-describe('collectMetadataInserts', () => {
-  it('builds one row per non-empty value', () => {
-    const result = collectMetadataInserts([
+describe('collectTraitInserts', () => {
+  it('builds one row per non-empty trait value', () => {
+    const result = collectTraitInserts([
       {
         player_session_id: 'ps1',
-        fieldValues: [
-          { field_id: 'f1', value: 'Brute' },
-          { field_id: 'f2', value: '' },
+        traitValues: [
+          { trait_id: 't1', trait_value: 'Brute' },
+          { trait_id: 't2', trait_value: '' },
         ],
       },
-      { player_session_id: 'ps2', fieldValues: [{ field_id: 'f1', value: '  Spellweaver ' }] },
+      {
+        player_session_id: 'ps2',
+        traitValues: [{ trait_id: 't1', trait_value: '  Spellweaver ' }],
+      },
     ])
     expect(result).toEqual([
-      { player_session_id: 'ps1', field_id: 'f1', value: 'Brute' },
-      { player_session_id: 'ps2', field_id: 'f1', value: 'Spellweaver' },
+      { player_session_id: 'ps1', field_id: 't1', value: 'Brute' },
+      { player_session_id: 'ps2', field_id: 't1', value: 'Spellweaver' },
     ])
   })
 
-  it('returns an empty array when all values are blank', () => {
+  it('returns an empty array when all trait values are blank', () => {
     expect(
-      collectMetadataInserts([
-        { player_session_id: 'ps1', fieldValues: [{ field_id: 'f1', value: '   ' }] },
+      collectTraitInserts([
+        { player_session_id: 'ps1', traitValues: [{ trait_id: 't1', trait_value: '   ' }] },
       ]),
     ).toEqual([])
   })

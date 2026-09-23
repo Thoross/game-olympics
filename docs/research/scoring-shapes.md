@@ -8,22 +8,51 @@ There is no existing convention for research notes in this repo (`docs/` holds o
 
 ---
 
-## Headline: the survey half of this ticket could not be performed
+## Survey results (run by an admin, 2026-09-23)
+
+The per-game query below was run against the live database:
+
+| Game (BGG id)              | Sessions | Player rows | Distinct scores | Min | Max | 0/1 rows |
+| -------------------------- | -------- | ----------- | --------------- | --- | --- | -------- |
+| Galactic Cruise (391137)   | 4        | 16          | 16              | 96  | 203 | 0        |
+| Brass: Birmingham (224517) | 0        | 0           | 0               | —   | —   | 0        |
+| Root (237182)              | 0        | 0           | 0               | —   | —   | 0        |
+
+What this answers:
+
+- **The library holds three games, and only one has ever been played.** Every recorded session is
+  Galactic Cruise: shape 1 (cumulative VP), with 16 distinct scores across 16 rows, all between
+  96 and 203.
+- **No fabricated scores exist.** There are no 0/1 rows. The per-session check below was also run,
+  and all four sessions (2026-06-24, 07-01, 07-08, 07-22) have 4 players with 4 distinct scores and
+  4 distinct positions, so there are no ties and no all-equal sessions. The worry in "What the
+  schema forces" is about what the schema _allows_, not about harm already done. The `NOT NULL` relaxation in #17 has **nothing to backfill**.
+- **Brass: Birmingham is also cumulative VP** (shape 1). **Root is single winner** (shape 2) as this
+  group plays it, but it has never been recorded, so no Root data needs cleaning up.
+- **There are no team/side, elimination, ranked-without-points or semi-co-op games in the library.**
+  Shapes 4–7 are hypothetical for this group today, so an enum of the two founding members is
+  enough for the current library.
+- Data quirk: the stored name is `"Brass:  Birmingham"`, with two spaces after the colon.
+
+The rest of this document was written before database access was available and is kept as the
+reasoning record.
+
+## Original headline: the survey could not be performed at first
 
 **I could not read a single row of `games`, `sessions`, or `player_sessions`.** Everything below
-about the *library* is therefore a statement about what the schema and code permit, not about what
-the group has actually recorded. Nothing here should be read as an observation of real session data.
+about the _library_ is therefore a statement about what the schema and code permit, not about what
+the group has actually recorded.
 
 ### What I tried, and exactly why it failed
 
-| Route | Result |
-| --- | --- |
-| Supabase MCP server | Not attached to this session. The only DB MCP present is Neon, which is a different product and a different project. |
-| `supabase` CLI | Not installed (`which supabase` → not found). `psql` likewise not installed. |
-| Direct Postgres connection | No connection string and no service-role key exists anywhere in the working tree. `.env` contains exactly three keys: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `BGG_API_TOKEN`. |
-| PostgREST with the publishable (anon) key | Reachable, but returns `[]` for every table. |
+| Route                                     | Result                                                                                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Supabase MCP server                       | Not attached to this session. The only DB MCP present is Neon, which is a different product and a different project.                                                                             |
+| `supabase` CLI                            | Not installed (`which supabase` → not found). `psql` likewise not installed.                                                                                                                     |
+| Direct Postgres connection                | No connection string and no service-role key exists anywhere in the working tree. `.env` contains exactly three keys: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `BGG_API_TOKEN`. |
+| PostgREST with the publishable (anon) key | Reachable, but returns `[]` for every table.                                                                                                                                                     |
 
-The anon-key result is a *policy* refusal, not an empty database. Every read policy in
+The anon-key result is a _policy_ refusal, not an empty database. Every read policy in
 `supabase/migrations/20260701000000_baseline.sql` is granted `TO "authenticated"`:
 
 ```sql
@@ -91,8 +120,8 @@ into a numeric column).
 
 **Both are `NOT NULL`.** `src/lib/database.types.ts:151` agrees — `player_session_score: number`,
 not `number | null`. This contradicts the claim in `CLAUDE.md` ("`player_sessions` stores nullable
-`player_session_score` and `player_session_position`") and the same claim in the map's notes on
-#10. It matters a lot: **a scoreless game cannot be recorded today without inventing a number.**
+`player_session_score` and `player_session_position`") and the same claim in the map's notes
+on #10. It matters a lot: **a scoreless game cannot be recorded today without inventing a number.**
 
 The write path enforces the same thing independently. `src/routes/(authed)/admin/sessions/add/+page.server.ts:89-95`
 does `parseInt` on each score field and fails the whole action on `NaN`, so a blank score box is
@@ -100,7 +129,7 @@ rejected before it reaches Postgres. `rankPlayers()`
 (`src/routes/(authed)/admin/sessions/add/utils.server.ts:8`) then derives position purely by sorting
 that number descending.
 
-The consequence is a data-integrity conclusion I *can* state confidently without seeing a row: **any
+The consequence is a data-integrity conclusion I _can_ state confidently without seeing a row: **any
 scoreless-by-nature game already in the library must have been recorded with a fabricated score** —
 almost certainly `1`/`0` for winner/loser, or all-equal values for a cooperative play. Those
 fabricated numbers are not inert. They flow into:
@@ -111,20 +140,20 @@ fabricated numbers are not inert. They flow into:
 - the game detail page's score display (`games/[gameId]/+page.server.ts:98`)
 
 So a Root session recorded as 1/0/0/0 currently drags four players' `avg_score` toward zero and
-plots a meaningless flat line — and it does so *silently*. This is worth stating as motivation in
+plots a meaningless flat line — and it does so _silently_. This is worth stating as motivation in
 the spec: the feature is not only about points derivation, it is about stopping fake scores from
 polluting the score-based stats. Note the defensive `?? 0` at those three call sites, which implies
 someone already expected nulls the schema does not currently allow.
 
 `positionToPoints()` (`src/lib/server/utils.server.ts:13`) reads only position, and `getMultiplier()`
-scales the result. Any method that produces standings points *without* producing a position has no
+scales the result. Any method that produces standings points _without_ producing a position has no
 seam to attach to today.
 
 ---
 
 ## Scoring shapes: what the model has to be able to express
 
-I can enumerate the *shapes* from first principles and from BGG's own mechanic vocabulary (below).
+I can enumerate the _shapes_ from first principles and from BGG's own mechanic vocabulary (below).
 I cannot tell you which of them this group's library actually contains. Treating them as a checklist
 for the admin survey:
 
@@ -134,7 +163,7 @@ for the admin survey:
    runner-up to award 3 points to, so `positionToPoints`'s 4/3/2/1 ladder is meaningless past
    position 1. Root, as this group plays it.
 3. **Cooperative win/lose.** All players share one outcome. Already modelled as a separate boolean
-   per ADR-0003, deliberately *not* folded into the method (map, "already settled"). Worth noting
+   per ADR-0003, deliberately _not_ folded into the method (map, "already settled"). Worth noting
    ADR-0003's reasoning cuts both ways: it rejected inferring co-op from "everyone shares position 1"
    because the inference is unreliable — the same argument says the scoring method must be
    admin-entered rather than derived from score patterns.
@@ -143,7 +172,7 @@ for the admin survey:
    and `player_sessions` has no team column. If the library contains one of these, it is a schema
    question, not an enum question.
 5. **Elimination order.** Position is real and fully ordered, but there is no score at all — last
-   player standing, then reverse order of death. Ranked-without-points. This one is *nearly* free:
+   player standing, then reverse order of death. Ranked-without-points. This one is _nearly_ free:
    position is the thing `positionToPoints` already wants, so the method only needs to let an admin
    enter positions directly instead of deriving them from scores.
 6. **Ranked without points, non-elimination.** Same as above but by agreement or a race finish
@@ -183,13 +212,13 @@ does not parse `<link>` elements at all, so **nothing on `games` today carries a
 
 The closest thing BGG has is `<link type="boardgamemechanic">`. Live samples:
 
-| Game (BGG id) | Mechanics relevant to scoring shape |
-| --- | --- |
-| Pandemic (30549) | `Cooperative Game`, `Solo / Solitaire Game` |
-| Codenames (178900) | `Team-Based Game` |
-| Risk (181) | `Player Elimination` |
-| Galactic Cruise (391137) | `Victory Points as a Resource` |
-| Root (237182) | *(none)* — Action Points, Area Majority / Influence, Race, Sudden Death Ending, … |
+| Game (BGG id)            | Mechanics relevant to scoring shape                                               |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| Pandemic (30549)         | `Cooperative Game`, `Solo / Solitaire Game`                                       |
+| Codenames (178900)       | `Team-Based Game`                                                                 |
+| Risk (181)               | `Player Elimination`                                                              |
+| Galactic Cruise (391137) | `Victory Points as a Resource`                                                    |
+| Root (237182)            | _(none)_ — Action Points, Area Majority / Influence, Race, Sudden Death Ending, … |
 
 So the vocabulary does contain `Cooperative Game`, `Team-Based Game`, and `Player Elimination`,
 which look tempting. **They are not sufficient, and the two games this feature was designed around
@@ -197,18 +226,18 @@ prove it:**
 
 - **Root has no mechanic that reveals its scoring shape.** Nothing in its mechanic list distinguishes
   it from a points game. (Root does in fact have victory points in the published rules — 30 VP to
-  win — and this group simply records it as a single winner. That is a *house-rule* fact about how
+  win — and this group simply records it as a single winner. That is a _house-rule_ fact about how
   they play, which no external database can ever know.)
-- **`Victory Points as a Resource` is the wrong predicate.** It means VP can be *spent*, not that the
+- **`Victory Points as a Resource` is the wrong predicate.** It means VP can be _spent_, not that the
   game has VP. Plenty of pure point-salad games lack it, so its presence on Galactic Cruise and
   absence on Root is coincidence, not signal.
 - `Player Elimination` describes a mechanic that may occur, not that final standings are an
   elimination order.
 - `Cooperative Game` genuinely correlates, but ADR-0003 already decided co-op is explicitly flagged
-  rather than inferred, and BGG mechanics on games with co-op *modes* would produce false positives.
+  rather than inferred, and BGG mechanics on games with co-op _modes_ would produce false positives.
 
 **Conclusion: the scoring method must be admin-entered.** A dropdown, as the map already settled.
-BGG mechanics could at most seed a *suggested* default in the add-game form, and I would not build
+BGG mechanics could at most seed a _suggested_ default in the add-game form, and I would not build
 even that — the mapping is wrong often enough (Root) that a wrong pre-filled default is worse than
 an empty required field, because a pre-filled default gets accepted without thought.
 
@@ -218,17 +247,17 @@ an empty required field, because a pre-filled default gets accepted without thou
 
 - Correct the "nullable `player_session_score`" note on #10 — both score columns are `NOT NULL`, in
   the migration and in the generated types. The migration in #17 has to relax them (or introduce a
-  separate representation), and every existing row needs a backfill story.
-- #12 (enum contents) should not close on desk research alone. The per-game survey needs someone
-  with DB access; the queries above are ready to paste.
-- Consider a third enum member for **positions entered directly, with no score** — it covers
-  elimination order and ranked-without-points, needs no new entity, and slots straight into
-  `positionToPoints`.
-- **Team/side games are the shape the map has not anticipated.** They cannot be expressed as an enum
-  member because the missing thing is a grouping on `player_sessions`, not a points formula. Either
-  confirm the library has none (survey), or scope them out explicitly.
-- Worth a line in #15: fabricated 1/0 scores are already flowing into `avg_score` — the standings
-  tiebreaker — not just into the charts.
+  separate representation). The survey shows every existing row is a real VP score, so no backfill
+  is needed.
+- #12 (enum contents) can now proceed: the library contains only cumulative-VP games (Galactic
+  Cruise, Brass: Birmingham) and one single-winner game (Root).
+- A third enum member for **positions entered directly, with no score** would cover elimination
+  order and ranked-without-points. No game in the library needs it today, so it is optional.
+- **Team/side games: the library has none.** Scope them out explicitly. They cannot be an enum
+  member anyway, because what's missing is a grouping on `player_sessions`, not a points formula.
+- #15: no fabricated scores exist yet, but the schema would force one the first time Root is
+  recorded, and it would flow into `avg_score`, the standings tiebreaker. The feature should ship
+  before the first Root session is recorded.
 
 ## Sources
 
